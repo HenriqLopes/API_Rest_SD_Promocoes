@@ -120,14 +120,26 @@ def define_promo():
 	}
 	return promos
 
-def envia_promo():
-	#monta um pacote com as info de uma promo
-	#assina e chaveia
-	#envia pra valida promo
+
+def envia_pacote(dados, destino):
+	# monta o pacote
+	pacote = inic_pacote()
+
+	escreve_nome(pacote, (dados["id_promo1"])["nome_promo"])
+	escreve_id(pacote,(dados["id_promo1"])["promo_id"])
+	escreve_voto(pacote, (dados["id_promo1"])["voto"])
+	escreve_n_rk(pacote, (dados["id_promo1"])["n_rk"])
+
+	#assinar o pacote
+
+	#
+
+
+def envia_promo(dados):
+	envia_pacote(dados, "")
+
 	return
 
-def envia_voto():
-	#monta um pacote com as info de uma promo
-	#assina e chaveia
-	#envia pro rank
+def envia_voto(dados):
+	envia_pacote(dados, "rk_rank")
 	return
