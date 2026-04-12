@@ -100,7 +100,7 @@ def mostra_lista_promo(cliente, promocoes):
 		print("  Nenhuma promoção disponível para suas categorias.")
 
 
-def armazena_promo():
+def define_promo():
 	#Promos que serão hardcoded pré execução
 	promos = {
 		#R_KEY_PROM_LIVRO = 'rk_livr'
@@ -116,12 +116,18 @@ def armazena_promo():
 		"id_promo" : {"ini_bits_SHA":0, "tam_bits_SHA":32, "nome_promo":"faz o L", "promo_id":0, "n_rk": 0 , "rk_1":0, "rk_2":0},
 
 		#R_KEY_PROM_COMIDA = 'rk_comi'
-        "id_promo" : {"ini_bits_SHA":0, "tam_bits_SHA":32, "nome_promo":"faz o L", "promo_id":0, "n_rk": 0 , "rk_1":0, "rk_2":0}
-    }
+		"id_promo" : {"ini_bits_SHA":0, "tam_bits_SHA":32, "nome_promo":"faz o L", "promo_id":0, "n_rk": 0 , "rk_1":0, "rk_2":0}
+	}
 	return promos
 
 def envia_promo():
+	#monta um pacote com as info de uma promo
+	#assina e chaveia
+	#envia pra valida promo
 	return
 
 def envia_voto():
+	#monta um pacote com as info de uma promo
+	#assina e chaveia
+	#envia pro rank
 	return
