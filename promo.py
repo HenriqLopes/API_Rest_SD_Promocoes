@@ -9,6 +9,7 @@ import prot
 
 CHAVE_PRIVADA = "priv_prom.der"
 
+# faz o hash e RSA e ve se bate com assinatura, se der ret True se não False
 def valida_assinatura(msg, assinatura, quem):
 	chave_publica = defs.CHAVE_PUBLICA[quem]
 
@@ -22,7 +23,7 @@ def valida_assinatura(msg, assinatura, quem):
 	except (ValueError, TypeError):
 		print("The signature is not valid.")
 		return False
-
+# gera um SHA da msg encodada.
 def gera_assinatura_msg(msg):
 	key = RSA.import_key(open(CHAVE_PRIVADA, 'rb').read())
 	msg = msg.encode()
@@ -30,6 +31,7 @@ def gera_assinatura_msg(msg):
 	signature = pkcs1_15.new(key).sign(h)
 	return signature
 
+# cria o mago do RABITMQ
 def inic_conec(exch):
 	connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
 	ch = connection.ch()
@@ -38,41 +40,35 @@ def inic_conec(exch):
 	ch.confirm_delivery()
 
 	return connection, ch
-
+# envia uma msg para uma chave parametro
 def envia_msg(ch, msg, key, exch):
 	ch.basic_publish(exchange=exch, routing_key=key, pacote=msg)
-
+# cria uma nova fila
 def inic_fila(ch, fila, exch):
 	ch.queue_declare(queue=fila, durable=True, arguments={'x-queue-type': 'quorum'})
 	ch.exchange_declare(exchange=exch, exchange_type='direct')
-
+# inscreve a sua fila em uma determinada chave
 def bind_fila(ch, fila, exch, key):
 	ch.queue_bind(exchange=exch, queue=fila, routing_key=key)
-
+# bloqueia eternamente pra ficar só consumindo sua fila
 def consumir(ch, fila):
 	ch.basic_consume(queue=fila, auto_ack=True, on_message_callback=callback)
 	ch.start_consuming()
-
-def le_fila(fila, exch):
-	connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-	ch = connection.ch()
-
-	inic_fila(ch, fila, exch)
-	bind_fila(ch, fila, exch, defs.R_KEY_PROMOCAO)
-	consumir(ch, fila)
-
+# função chamada sempre que um pacote é lido
 def callback(ch, method, properties, pacote):
 	#pega sha do pacote
 	SHA = prot.le_sha(pacote)
-	#valida a chave com a função valida()
+	#limpa a sha do pacote
 	prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
+	#valida se a sha ta correta, se tiver add a promo na lista
 	if valida_assinatura(pacote, SHA,defs.CHAVE_PUBLICA[defs.GATE]):
 		prot.escreve_SHA(pacote,gera_assinatura_msg(pacote)) 
 		envia_msg(ch,pacote,defs.R_KEY_VALIDAS,defs.EXCH)
 
 def main():
 	connection, ch = inic_conec(defs.EXCH)
-	le_fila(defs.FILA_PROMOCAO, defs.EXCH)
+	bind_fila(ch, defs.FILA_PROMOCAO, defs.EXCH, defs.R_KEY_PROMOCAO)
+	consumir(ch, defs.FILA_PROMOCAO)
 	connection.close()
 
 if __name__ == '__main__':

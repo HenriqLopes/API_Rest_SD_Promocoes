@@ -58,8 +58,9 @@ def consumir(ch, fila):
 def callback(ch, method, properties, pacote):
 	#pega sha do pacote
 	SHA = prot.le_sha(pacote)
-	#valida a chave com a função valida()
+	#limpa a sha do pacote
 	prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
+	#valida se a sha ta correta, se tiver add a promo na lista
 	if valida_assinatura(pacote, SHA,defs.CHAVE_PUBLICA[defs.PROM]):
 		n_keys = prot.le_n_rk(pacote)
 		#envia para todas as chaves da promo
