@@ -57,14 +57,6 @@ def bind_fila(ch, fila, exch, key):
 def consumir(ch, fila):
 	ch.basic_consume(queue=fila, auto_ack=True, on_message_callback=callback)
 	ch.start_consuming()
-# cria fila binda hardcoded e começa a consumir eternamente
-def le_fila(fila, exch):
-	connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-	ch = connection.ch()
-
-	inic_fila(ch, fila, exch)
-	bind_fila(ch, fila, exch, defs.R_KEY_GATEWAY)
-	consumir(ch, fila)
 # função chamada sempre que um pacote é lido
 def callback(ch, method, properties, pacote):
 	global dict_promo
@@ -94,7 +86,6 @@ def interface_cliente():
 
 	if encontrou_promo == False:
 		print("  Nenhuma promoção disponível para suas categorias.")'''
-
 '''def define_promo():
 	#Promos que serão hardcoded pré execução
 	promos = {
@@ -115,7 +106,6 @@ def interface_cliente():
 	}
 	return promos
 '''
-
 '''def envia_pacote(pacote, destino):
 	# monta o pacote
 	connection,ch = inic_conec(defs.EXCH)
@@ -139,21 +129,22 @@ def recebe_pacote(dados, destino): #Microserviço promo.py
 	le_fila(defs.FILA_GATEWAY,defs.EXCH)
 	return'''
 
-#envia um pacote ja finalizado para PROMO
+# envia um pacote ja finalizado para PROMO
 def envia_promo(ch, dados):
 	envia_msg(ch, dados, defs.R_KEY_PROMOCAO, defs.EXCH)
 	return
-
-#envia um pacote ja finalizado para RANK
+# envia um pacote ja finalizado para RANK
 def envia_voto(ch, dados):
 	envia_msg(ch, dados, defs.R_KEY_RANKING, defs.EXCH)
 	return
 
 def main():
-	#inicializa o id das promos
+	# inicializa o id das promos
 	id = 0
-	#inicia a conec com o mago do RABITMQ
+	# inicia a conec com o mago do RABITMQ
 	connection, ch = inic_conec(defs.EXCH)
+	# binda na chave de proo validas para manter a lista
+	bind_fila(ch, defs.FILA_GATEWAY, defs.EXCH, defs.R_KEY_VALIDAS)
 
 	#loop principal
 	while (escolha_cliente != 4):
@@ -168,7 +159,8 @@ def main():
 
 			n_rk = input("Quantidade de tags: ")
 			for i in range(n_rk): 
-				tag = input("Quais tags a promoção tem? \n [1] Roupa \n [2] Esporte \n [3] Doméstico \n [4] Comida \n > ")
+				print(f"Quais tags a promoção tem? \n [{defs.PROM_ROUPA}] Roupa \n [{defs.PROM_ESPORTE}] Esporte \n [{defs.PROM_DOMESTICO}] Doméstico \n [{defs.PROM_COMIDA}] Comida \n [{defs.PROM_LIVRO}] Livro")
+				tag = input("> ")
 				prot.escreve_rk_num_n(pacote, tag, i)
 
 			prot.escreve_id(pacote, id)
@@ -180,7 +172,7 @@ def main():
 			envia_promo(ch, pacote)
 
 			#espera o resposta do pacote
-			le_fila(defs.FILA_GATEWAY, defs.EXCH_GATEWAY)
+			consumir(ch, defs.FILA_GATEWAY)
 
 		# escolha votar promo
 		elif (escolha_cliente == 2):

@@ -14,15 +14,21 @@ FILA_PROMOCAO = 'fl_prom'
 
 R_KEY_VALIDAS = 'rk_vali'
 
+PROM_LIVRO = 1
+PROM_ROUPA = 2
+PROM_ESPORTE = 3
+PROM_DOMESTICO = 4
+PROM_COMIDA = 5
+PROM_QUENTES = 6
 
-#Depois tem que trocar p número !!!!!!!!!!!!!!!!!!
-
-R_KEY_PROM_LIVRO = 'rk_livr'
-R_KEY_PROM_ROUPA = 'rk_roup'
-R_KEY_PROM_ESPORTE = 'rk_espo'
-R_KEY_PROM_DOMESTICO = 'rk_dome'
-R_KEY_PROM_COMIDA = 'rk_comi'
-R_KEY_PROM_QUENTES = 'rk_quen'
+R_KEYS = {
+	PROM_LIVRO: 'rk_livr',
+	PROM_ROUPA: 'rk_roup',
+	PROM_ESPORTE: 'rk_espo',
+	PROM_DOMESTICO: 'rk_dome',
+	PROM_COMIDA: 'rk_comi',
+	PROM_QUENTES: 'rk_quen'
+}
 
 #chaves
 
