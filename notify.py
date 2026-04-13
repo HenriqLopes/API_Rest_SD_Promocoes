@@ -70,6 +70,7 @@ def callback(ch, method, properties, pacote):
 
 def main():
 	connection, ch = inic_conec(defs.EXCH)
+	inic_fila(ch, defs.FILA_NOTIFICA)
 	bind_fila(ch, defs.FILA_NOTIFICA, defs.EXCH, defs.R_KEY_VALIDAS)
 	consumir(ch, defs.FILA_NOTIFICA)
 	connection.close()

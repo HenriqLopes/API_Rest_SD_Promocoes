@@ -67,6 +67,7 @@ def callback(ch, method, properties, pacote):
 
 def main():
 	connection, ch = inic_conec(defs.EXCH)
+	inic_fila(ch, defs.FILA_PROMOCAO)
 	bind_fila(ch, defs.FILA_PROMOCAO, defs.EXCH, defs.R_KEY_PROMOCAO)
 	consumir(ch, defs.FILA_PROMOCAO)
 	connection.close()

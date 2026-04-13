@@ -139,11 +139,9 @@ def envia_voto(ch, dados):
 	return
 
 def main():
-	# inicializa o id das promos
 	id = 0
-	# inicia a conec com o mago do RABITMQ
 	connection, ch = inic_conec(defs.EXCH)
-	# binda na chave de proo validas para manter a lista
+	inic_fila(ch, defs.FILA_GATEWAY, defs.EXCH)
 	bind_fila(ch, defs.FILA_GATEWAY, defs.EXCH, defs.R_KEY_VALIDAS)
 
 	#loop principal
