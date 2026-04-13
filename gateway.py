@@ -5,6 +5,7 @@ from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 
 import defs
+import prot
 
 CHAVE_PRIVADA = "priv_gate.der"
 
@@ -123,21 +124,29 @@ def define_promo():
 
 def envia_pacote(dados, destino):
 	# monta o pacote
-	pacote = inic_pacote()
+	connection,channel = inic_conec(defs.EXCH)
+	pacote = prot.inic_pacote()
 
-	escreve_nome(pacote, (dados["id_promo1"])["nome_promo"])
-	escreve_id(pacote,(dados["id_promo1"])["promo_id"])
-	escreve_voto(pacote, (dados["id_promo1"])["voto"])
-	escreve_n_rk(pacote, (dados["id_promo1"])["n_rk"])
+	prot.escreve_nome(pacote, (dados["id_promo1"])["nome_promo"])
+	prot.escreve_id(pacote,(dados["id_promo1"])["promo_id"])
+	prot.escreve_voto(pacote, (dados["id_promo1"])["voto"])
+	prot.escreve_n_rk(pacote, (dados["id_promo1"])["n_rk"])
 
-	#assinar o pacote
+	# assinar o pacote e fazer SHA
+	prot.escreve_SHA(pacote,gera_assinatura_msg(pacote)) #transformar em string se der BO
 
-	#
+	# Defiir pra quem vai mandar 
+	envia_msg(channel, pacote, destino, defs.EXCH)
 
+
+def recebe_pacote(dados, destino): #Microserviço promo.py
+	#recebe pacote na fila
+	#pega sha do pacote
+	#valida a chave com a função valida()
+	return
 
 def envia_promo(dados):
-	envia_pacote(dados, "")
-
+	envia_pacote(dados, "valida_prom")
 	return
 
 def envia_voto(dados):
