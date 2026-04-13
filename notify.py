@@ -9,7 +9,6 @@ import prot
 
 CHAVE_PRIVADA = "priv_noti.der"
 
-
 def valida_assinatura(msg, assinatura, quem):
 	chave_publica = defs.CHAVE_PUBLICA[quem]
 
