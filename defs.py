@@ -12,6 +12,9 @@ FILA_RANKING = 'fl_rank'
 R_KEY_PROMOCAO = 'rk_prom'
 FILA_PROMOCAO = 'fl_prom'
 
+R_KEY_VALIDAS = 'rk_vali'
+
+
 #Depois tem que trocar p número !!!!!!!!!!!!!!!!!!
 
 R_KEY_PROM_LIVRO = 'rk_livr'

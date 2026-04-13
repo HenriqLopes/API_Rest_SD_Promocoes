@@ -12,7 +12,7 @@ dict_promo = {}
 CHAVE_PRIVADA = "priv_gate.der"
 
 def valida_assinatura(msg, assinatura, quem):
-	chave_publica = CHAVE_PUBLICA[quem]
+	chave_publica = defs.CHAVE_PUBLICA[quem]
 
 	key = RSA.import_key(open(chave_publica, 'rb').read())
 	h = SHA256.new(msg)
@@ -43,9 +43,6 @@ def inic_conec(exch):
 
 def envia_msg(ch, msg, key, exch):
 	ch.basic_publish(exchange=exch, routing_key=key, pacote=msg)
-
-if __name__ == '__main__':
-	main()
 
 def inic_fila(ch, fila, exch):
 	ch.queue_declare(queue=fila, durable=True, arguments={'x-queue-type': 'quorum'})
