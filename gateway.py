@@ -7,6 +7,8 @@ from Crypto.PublicKey import RSA
 import defs
 import prot
 
+dict_promo = {}
+
 CHAVE_PRIVADA = "priv_gate.der"
 
 def valida_assinatura(msg, assinatura, quem):
@@ -32,58 +34,49 @@ def gera_assinatura_msg(msg):
 
 def inic_conec(exch):
 	connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-	channel = connection.channel()
+	ch = connection.ch()
 
-	channel.exchange_declare(exchange=exch, exchange_type='direct')
-	channel.confirm_delivery()
+	ch.exchange_declare(exchange=exch, exchange_type='direct')
+	ch.confirm_delivery()
 
-	return connection, channel
+	return connection, ch
 
-def envia_msg(channel, msg, key, exch):
-	channel.basic_publish(exchange=exch, routing_key=key, body=msg)
+def envia_msg(ch, msg, key, exch):
+	ch.basic_publish(exchange=exch, routing_key=key, pacote=msg)
 
 if __name__ == '__main__':
 	main()
 
-def inic_fila(channel, fila, exch):
-	channel.queue_declare(queue=fila, durable=True, arguments={'x-queue-type': 'quorum'})
-	channel.exchange_declare(exchange=exch, exchange_type='direct')
+def inic_fila(ch, fila, exch):
+	ch.queue_declare(queue=fila, durable=True, arguments={'x-queue-type': 'quorum'})
+	ch.exchange_declare(exchange=exch, exchange_type='direct')
 
-def bind_fila(channel, fila, exch, key):
-	channel.queue_bind(exchange=exch, queue=fila, routing_key=key)
+def bind_fila(ch, fila, exch, key):
+	ch.queue_bind(exchange=exch, queue=fila, routing_key=key)
 
-def consumir(channel, fila):
-	channel.basic_consume(queue=fila, auto_ack=True, on_message_callback=callback)
-	channel.start_consuming()
+def consumir(ch, fila):
+	ch.basic_consume(queue=fila, auto_ack=True, on_message_callback=callback)
+	ch.start_consuming()
 
 def le_fila(fila, exch):
 	connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-	channel = connection.channel()
+	ch = connection.ch()
 
-	inic_fila(channel, fila, exch)
-	bind_fila(channel, fila, exch, defs.R_KEY_GATEWAY)
-	consumir(channel, fila)
+	inic_fila(ch, fila, exch)
+	bind_fila(ch, fila, exch, defs.R_KEY_GATEWAY)
+	consumir(ch, fila)
 
-def callback(ch, method, properties, body):
-	print(f" [x] Received {body}")
+def callback(ch, method, properties, pacote):
+	#pega sha do pacote
+	SHA = prot.le_sha(pacote)
+	#valida a chave com a função valida()
+	prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
+	if valida_assinatura(pacote, SHA,defs.CHAVE_PUBLICA[defs.PROM]):
+		dict_promo[pacote['id']] = pacote
+	ch.stop_consuming()
 
 def interface_cliente():
-	print("[1] Adicionar nova promoção \n [2] Listar promoções \n [3] Votar promoções" )
-
-def main():
-
-	#essa função vai entrar em um loop infinito de leitura
-	#le_fila(defs.FILA_GATEWAY, defs.EXCH_GATEWAY)
-
-	#essa parada aqui, vai ter que ser uma parte do callback, leu enviou pq leu sabe, pq ler e mandar sem ser com thread vai dar pau
-	connection, channel = inic_conec(defs.EXCH)
-	#enviar pra promo
-	envia_msg(channel, "TESTE_GATE_PROMO", defs.R_KEY_PROMOCAO, defs.EXCH)
-
-	connection.close()
-
-def comando_cliente():
-	return
+	return input("[1] Adicionar nova promoção \n [2] Listar promoções \n [3] Votar promoções")
 
 def mostra_lista_promo(cliente, promocoes):
 	print(f"=== PROMOÇÕES DISPONÍVEIS ===")
@@ -124,7 +117,7 @@ def define_promo():
 
 def envia_pacote(dados, destino):
 	# monta o pacote
-	connection,channel = inic_conec(defs.EXCH)
+	connection,ch = inic_conec(defs.EXCH)
 	pacote = prot.inic_pacote()
 
 	prot.escreve_nome(pacote, (dados["id_promo1"])["nome_promo"])
@@ -136,13 +129,13 @@ def envia_pacote(dados, destino):
 	prot.escreve_SHA(pacote,gera_assinatura_msg(pacote)) #transformar em string se der BO
 
 	# Defiir pra quem vai mandar 
-	envia_msg(channel, pacote, destino, defs.EXCH)
+	envia_msg(ch, pacote, destino, defs.EXCH)
 
 
 def recebe_pacote(dados, destino): #Microserviço promo.py
 	#recebe pacote na fila
-	#pega sha do pacote
-	#valida a chave com a função valida()
+	connection,ch = inic_conec(defs.EXCH)
+	le_fila(defs.FILA_GATEWAY,defs.EXCH)
 	return
 
 def envia_promo(dados):
@@ -152,3 +145,37 @@ def envia_promo(dados):
 def envia_voto(dados):
 	envia_pacote(dados, "rk_rank")
 	return
+
+def main():
+	id = 0
+	connection, ch = inic_conec(defs.EXCH)
+
+	escolha_cliente = interface_cliente()
+	if (escolha_cliente == 1):
+		tags = []
+		nome_promo = input("Nome da promoção: ")
+		pacote = prot.inic_pacote()
+		prot.escreve_nome(pacote, nome_promo)
+		n_rk = input("Quantidade de tags: ")
+		for i in range(n_rk): 
+			tag = input("Quais tags a promoção tem? \n [1] Roupa \n [2] Esporte \n [3] Doméstico \n [4] Comida \n > ")
+			prot.escreve_rk_num_n(pacote,tag,i)
+		prot.escreve_id(pacote,id)
+		id += 1
+		prot.escreve_sha(pacote,gera_assinatura_msg(pacote))
+		envia_promo(pacote)
+		le_fila(defs.FILA_GATEWAY, defs.EXCH_GATEWAY)
+
+	elif (escolha_cliente == 2):
+		id = input("ID: ")
+		if(id in dict_promo):
+			pacote = dict_promo['id']
+			prot.escreve_voto(pacote, 's')
+			envia_voto(pacote)
+
+	elif (escolha_cliente == 3):
+		for pacote in dict_promo["id"]:
+			print(f"\n {prot.le_id(pacote)}")
+			print(prot.le_nome(pacote))
+
+	connection.close()
