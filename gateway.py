@@ -64,6 +64,7 @@ def le_fila(fila, exch):
 	consumir(ch, fila)
 
 def callback(ch, method, properties, pacote):
+	global dict_promo
 	#pega sha do pacote
 	SHA = prot.le_sha(pacote)
 	#valida a chave com a função valida()
@@ -140,7 +141,7 @@ def envia_promo(dados):
 	return
 
 def envia_voto(dados):
-	envia_pacote(dados, "rk_rank")
+	envia_pacote(dados, "R_KEY_RANKING")
 	return
 
 def main():
