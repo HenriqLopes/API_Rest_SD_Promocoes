@@ -7,7 +7,7 @@ from Crypto.PublicKey import RSA
 import defs
 import prot
 
-CHAVE_PRIVADA = "priv_noti.der"
+CHAVE_PRIVADA = "chaves_privadas/priv_noti.der"
 
 # faz o hash e RSA e ve se bate com assinatura, se der ret True se não False
 def valida_assinatura(msg, assinatura, quem):
@@ -34,7 +34,7 @@ def gera_assinatura_msg(msg):
 # cria o mago do RABITMQ
 def inic_conec(exch):
 	connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-	ch = connection.ch()
+	ch = connection.channel()
 
 	ch.exchange_declare(exchange=exch, exchange_type='direct')
 	ch.confirm_delivery()
@@ -70,7 +70,7 @@ def callback(ch, method, properties, pacote):
 
 def main():
 	connection, ch = inic_conec(defs.EXCH)
-	inic_fila(ch, defs.FILA_NOTIFICA)
+	inic_fila(ch, defs.FILA_NOTIFICA, defs.EXCH)
 	bind_fila(ch, defs.FILA_NOTIFICA, defs.EXCH, defs.R_KEY_VALIDAS)
 	consumir(ch, defs.FILA_NOTIFICA)
 	connection.close()

@@ -7,7 +7,7 @@ from Crypto.PublicKey import RSA
 import defs
 import prot
 
-CHAVE_PRIVADA = "priv_prom.der"
+CHAVE_PRIVADA = "chaves_privadas/priv_prom.der"
 
 # faz o hash e RSA e ve se bate com assinatura, se der ret True se não False
 def valida_assinatura(msg, assinatura, quem):
@@ -34,7 +34,7 @@ def gera_assinatura_msg(msg):
 # cria o mago do RABITMQ
 def inic_conec(exch):
 	connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-	ch = connection.ch()
+	ch = connection.channel()
 
 	ch.exchange_declare(exchange=exch, exchange_type='direct')
 	ch.confirm_delivery()
@@ -62,12 +62,12 @@ def callback(ch, method, properties, pacote):
 	prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
 	#valida se a sha ta correta, se tiver add a promo na lista
 	if valida_assinatura(pacote, SHA,defs.CHAVE_PUBLICA[defs.GATE]):
-		prot.escreve_SHA(pacote,gera_assinatura_msg(pacote)) 
+		prot.escreve_SHA(pacote,prot.chars_para_str(gera_assinatura_msg(pacote))) 
 		envia_msg(ch,pacote,defs.R_KEY_VALIDAS,defs.EXCH)
 
 def main():
 	connection, ch = inic_conec(defs.EXCH)
-	inic_fila(ch, defs.FILA_PROMOCAO)
+	inic_fila(ch, defs.FILA_PROMOCAO, defs.EXCH)
 	bind_fila(ch, defs.FILA_PROMOCAO, defs.EXCH, defs.R_KEY_PROMOCAO)
 	consumir(ch, defs.FILA_PROMOCAO)
 	connection.close()

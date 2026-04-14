@@ -10,7 +10,7 @@ import prot
 #estrutura que armazena as promos ja validas
 dict_promo = {}
 
-CHAVE_PRIVADA = "priv_gate.der"
+CHAVE_PRIVADA = "chaves_privadas/priv_gate.der"
 
 # faz o hash e RSA e ve se bate com assinatura, se der ret True se não False
 def valida_assinatura(msg, assinatura, quem):
@@ -37,7 +37,7 @@ def gera_assinatura_msg(msg):
 # cria o mago do RABITMQ
 def inic_conec(exch):
 	connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-	ch = connection.ch()
+	ch = connection.channel()
 
 	ch.exchange_declare(exchange=exch, exchange_type='direct')
 	ch.confirm_delivery()
@@ -45,7 +45,7 @@ def inic_conec(exch):
 	return connection, ch
 # envia uma msg para uma chave parametro
 def envia_msg(ch, msg, key, exch):
-	ch.basic_publish(exchange=exch, routing_key=key, pacote=msg)
+	ch.basic_publish(exchange=exch, routing_key=key, body=msg)
 # cria uma nova fila
 def inic_fila(ch, fila, exch):
 	ch.queue_declare(queue=fila, durable=True, arguments={'x-queue-type': 'quorum'})
@@ -58,19 +58,19 @@ def consumir(ch, fila):
 	ch.basic_consume(queue=fila, auto_ack=True, on_message_callback=callback)
 	ch.start_consuming()
 # função chamada sempre que um pacote é lido
-def callback(ch, method, properties, pacote):
+def callback(ch, method, properties, body):
 	global dict_promo
 	#pega sha do pacote
-	SHA = prot.le_sha(pacote)
+	SHA = prot.le_sha(body)
 	#limpa a sha do pacote
-	prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
+	prot.escreve_sha(body,("0" * prot.TAM_BYT_SHA))
 	#valida se a sha ta correta, se tiver add a promo na lista
-	if valida_assinatura(pacote, SHA,defs.CHAVE_PUBLICA[defs.PROM]):
-		dict_promo[prot.le_id(pacote)] = pacote
+	if valida_assinatura(body, SHA,defs.CHAVE_PUBLICA[defs.PROM]):
+		dict_promo[prot.le_id(body)] = body
 	ch.stop_consuming()
 # recebe escolha do cliente
 def interface_cliente():
-	return input("[1] Adicionar nova promoção \n [2] Listar promoções \n [3] Votar promoções \n [4] Sair")
+	return int(input(" [1] Adicionar nova promoção \n [2] Votar promoções \n [3] Listar promoções \n [4] Sair\n >"))
 
 '''def mostra_lista_promo(cliente, promocoes):
 	print(f"=== PROMOÇÕES DISPONÍVEIS ===")
@@ -143,28 +143,27 @@ def main():
 	connection, ch = inic_conec(defs.EXCH)
 	inic_fila(ch, defs.FILA_GATEWAY, defs.EXCH)
 	bind_fila(ch, defs.FILA_GATEWAY, defs.EXCH, defs.R_KEY_VALIDAS)
-
+	escolha_cliente = interface_cliente()
 	#loop principal
 	while (escolha_cliente != 4):
-		escolha_cliente = interface_cliente()
 		# escolha add promo
 		if (escolha_cliente == 1):
 
 			pacote = prot.inic_pacote()
 
-			nome_promo = input("Nome da promoção: ")
+			nome_promo = str(input("Nome da promoção: "))
 			prot.escreve_nome(pacote, nome_promo)
 
-			n_rk = input("Quantidade de tags: ")
+			n_rk = int(input("Quantidade de tags: "))
 			for i in range(n_rk): 
 				print(f"Quais tags a promoção tem? \n [{defs.PROM_ROUPA}] Roupa \n [{defs.PROM_ESPORTE}] Esporte \n [{defs.PROM_DOMESTICO}] Doméstico \n [{defs.PROM_COMIDA}] Comida \n [{defs.PROM_LIVRO}] Livro")
-				tag = input("> ")
+				tag = int(input("> "))
 				prot.escreve_rk_num_n(pacote, tag, i)
 
 			prot.escreve_id(pacote, id)
 			id += 1
 
-			prot.escreve_sha(pacote, gera_assinatura_msg(pacote))
+			prot.escreve_sha(pacote, gera_assinatura_msg(prot.chars_para_str(pacote)))
 
 			#envia o pacote montado
 			envia_promo(ch, pacote)
@@ -188,4 +187,9 @@ def main():
 		elif (escolha_cliente == 4):
 			break
 
+		escolha_cliente = interface_cliente()
+
 	connection.close()
+
+if __name__ == '__main__':
+	main()

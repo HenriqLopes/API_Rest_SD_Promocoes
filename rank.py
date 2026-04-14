@@ -9,7 +9,7 @@ import prot
 
 dict_promo = {}
 
-CHAVE_PRIVADA = "priv_rank.der"
+CHAVE_PRIVADA = "chaves_privadas/priv_rank.der"
 
 VOTES_HOT_DEAL = 5
 
@@ -38,7 +38,7 @@ def gera_assinatura_msg(msg):
 # cria o mago do RABITMQ
 def inic_conec(exch):
 	connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-	ch = connection.ch()
+	ch = connection.channel()
 
 	ch.exchange_declare(exchange=exch, exchange_type='direct')
 	ch.confirm_delivery()
@@ -71,7 +71,7 @@ def callback(ch, method, properties, pacote):
 			pac, n = dict_promo[id]
 			n += 1
 			if n > VOTES_HOT_DEAL:
-				prot.escreve_SHA(pacote,gera_assinatura_msg(pacote)) 
+				prot.escreve_SHA(pacote,prot.chars_para_str(gera_assinatura_msg(pacote))) 
 				envia_msg(ch, pacote, defs.R_KEY_PROM_QUENTES, defs.EXCH)
 			dict_promo[id] = (pac, n)
 		else:
