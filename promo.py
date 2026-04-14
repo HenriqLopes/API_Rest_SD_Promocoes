@@ -62,7 +62,7 @@ def consumir(ch, fila):
 def callback(ch, method, properties, pacote):
 	pacote = list(chr(b) for b in pacote)
 	print("[] pacote recebido")
-	prot.print_pacote(pacote)
+	#prot.print_pacote(pacote)
 
 	#pega sha do pacote
 	SHA = prot.le_sha(pacote)

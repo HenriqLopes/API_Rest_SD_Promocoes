@@ -7,8 +7,8 @@ from Crypto.PublicKey import RSA
 import defs
 import prot
 
-FILA = 'fl_cli1'
-RK_1 = defs.R_KEYS[defs.PROM_COMIDA]
+FILA = 'fl_cli2'
+RK_1 = defs.R_KEYS[defs.PROM_DOMESTICO]
 RK_2 = defs.R_KEYS[defs.PROM_QUENTES]
 
 # cria o mago do RABITMQ
@@ -36,7 +36,7 @@ def callback(ch, method, properties, pacote):
 	pacote = list(chr(b) for b in pacote)
 	print("[] pacote recebido")
 	print (f"[] nova promo {prot.le_id(pacote)}: {prot.le_nome(pacote)}")
-	#prot.print_pacote(pacote)
+	# prot.print_pacote(pacote)
 
 def main():
 	connection, ch = inic_conec(defs.EXCH)

@@ -13,7 +13,7 @@ dict_promo = {}
 
 CHAVE_PRIVADA = "chaves_privadas/priv_rank.der"
 
-VOTES_HOT_DEAL = 5
+VOTES_HOT_DEAL = 3
 
 # faz o hash e RSA e ve se bate com assinatura, se der ret True se não False
 def valida_assinatura(msg, assinatura, quem):
@@ -67,7 +67,7 @@ def callback(ch, method, properties, pacote):
 	
 	pacote = list(chr(b) for b in pacote)
 	print("[] pacote recebido")
-	prot.print_pacote(pacote)
+	#prot.print_pacote(pacote)
 
 	#pega sha do pacote
 	SHA = prot.le_sha(pacote)

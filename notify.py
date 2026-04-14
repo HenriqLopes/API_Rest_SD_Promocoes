@@ -61,7 +61,7 @@ def consumir(ch, fila):
 def callback(ch, method, properties, pacote):
 	pacote = list(chr(b) for b in pacote)
 	print("[] pacote recebido")
-	prot.print_pacote(pacote)
+	#prot.print_pacote(pacote)
 
 	#pega sha do pacote
 	SHA = prot.le_sha(pacote)
@@ -75,7 +75,7 @@ def callback(ch, method, properties, pacote):
 		print(f"[] publicando em {n_keys} tags")
 		#envia para todas as chaves da promo
 		for i in range(n_keys): 
-			key = prot.le_rk_num_n(pacote, i)
+			key = prot.le_rk_num_n(pacote, i + 1)
 			print(f"[] enviando para tag: {defs.R_KEYS[key]}")
 			envia_msg(ch, prot.pacote_para_string(pacote), defs.R_KEYS[key], defs.EXCH)
 	else:

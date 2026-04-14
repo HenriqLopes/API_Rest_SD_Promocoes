@@ -65,7 +65,7 @@ def callback(ch, method, properties, body):
 	global dict_promo
 	print("[] pacote recebido")
 	pacote = list(chr(b) for b in body)
-	prot.print_pacote(pacote)
+	#prot.print_pacote(pacote)
 
 	#pega sha do pacote
 	SHA = prot.le_sha(pacote)
@@ -77,7 +77,7 @@ def callback(ch, method, properties, body):
 		print("[] assinatura valida")
 		id = prot.le_id(pacote)
 		dict_promo[id] = pacote
-		prot.print_pacote(dict_promo[id])
+		#prot.print_pacote(dict_promo[id])
 	else:
 		print("[] assinatura invalida")
 	print("[] encerrando consumo")
@@ -85,63 +85,6 @@ def callback(ch, method, properties, body):
 # recebe escolha do cliente
 def interface_cliente():
 	return int(input(" [1] Adicionar nova promoção \n [2] Votar promoções \n [3] Listar promoções \n [4] Sair\n >"))
-
-'''def mostra_lista_promo(cliente, promocoes):
-	print(f"=== PROMOÇÕES DISPONÍVEIS ===")
-
-	encontrou_promo = False
-
-	for promo in promocoes.values():
-		#Tem que colocar aqui direito a parte das categorias do cliente, porque não sei como vai ficar
-		if promo['n_rk'] in cliente:
-			print(f"  Categoria: {promo['categoria']}")
-			print(f"  [{promo['id_promo']}] {promo['promo']}")
-			encontrou_promo = True
-
-	if encontrou_promo == False:
-		print("  Nenhuma promoção disponível para suas categorias.")'''
-'''def define_promo():
-	#Promos que serão hardcoded pré execução
-	promos = {
-		#R_KEY_PROM_LIVRO = 'rk_livr'
-		"id_promo1" : {"ini_bits_SHA":0, "tam_bits_SHA":32, "nome_promo":"faz o L", "promo_id":0, "n_rk": 0 , "rk_1":0, "rk_2":0},
-
-		#R_KEY_PROM_ROUPA = 'rk_roup'
-		"id_promo2" : {"ini_bits_SHA":0, "tam_bits_SHA":32, "nome_promo":"faz o L", "promo_id":0, "n_rk": 0 , "rk_1":0, "rk_2":0},
-
-		#R_KEY_PROM_ESPORTE = 'rk_espo'
-		"id_promo3" : {"ini_bits_SHA":0, "tam_bits_SHA":32, "nome_promo":"faz o L", "promo_id":0, "n_rk": 0 , "rk_1":0, "rk_2":0},
-
-		#R_KEY_PROM_DOMESTICO = 'rk_dome'
-		"id_promo4" : {"ini_bits_SHA":0, "tam_bits_SHA":32, "nome_promo":"faz o L", "promo_id":0, "n_rk": 0 , "rk_1":0, "rk_2":0},
-
-		#R_KEY_PROM_COMIDA = 'rk_comi'
-		"id_promo5" : {"ini_bits_SHA":0, "tam_bits_SHA":32, "nome_promo":"faz o L", "promo_id":0, "n_rk": 0 , "rk_1":0, "rk_2":0}
-	}
-	return promos
-'''
-'''def envia_pacote(pacote, destino):
-	# monta o pacote
-	connection,ch = inic_conec(defs.EXCH)
-	pacote = prot.inic_pacote()
-
-	prot.escreve_nome(pacote, (pacote["id_promo1"])["nome_promo"])
-	prot.escreve_id(pacote,(pacote["id_promo1"])["promo_id"])
-	prot.escreve_voto(pacote, (pacote["id_promo1"])["voto"])
-	prot.escreve_n_rk(pacote, (pacote["id_promo1"])["n_rk"])
-
-	# assinar o pacote e fazer SHA
-	prot.escreve_SHA(pacote,gera_assinatura_msg(pacote)) #transformar em string se der BO
-
-	# Defiir pra quem vai mandar 
-	envia_msg(ch, pacote, destino, defs.EXCH)
-
-
-def recebe_pacote(dados, destino): #Microserviço promo.py
-	#recebe pacote na fila
-	connection,ch = inic_conec(defs.EXCH)
-	le_fila(defs.FILA_GATEWAY,defs.EXCH)
-	return'''
 
 # envia um pacote ja finalizado para PROMO
 def envia_promo(ch, dados):
@@ -188,7 +131,7 @@ def main():
 			print(f"[] SHA adicionada: {prot.le_sha(pacote)}")
 
 			print("[] pacote completo")
-			prot.print_pacote(pacote)
+			#prot.print_pacote(pacote)
 			
 			#envia o pacote montado
 			print("[] enviando para promo")

@@ -7,9 +7,11 @@ from Crypto.PublicKey import RSA
 import defs
 import prot
 
-FILA = 'fl_cli1'
-RK_1 = defs.R_KEYS[defs.PROM_COMIDA]
-RK_2 = defs.R_KEYS[defs.PROM_QUENTES]
+FILA = 'fl_cli3'
+RK_1 = defs.R_KEYS[defs.PROM_LIVRO]
+RK_2 = defs.R_KEYS[defs.PROM_ROUPA]
+RK_3 = defs.R_KEYS[defs.PROM_COMIDA]
+RK_4 = defs.R_KEYS[defs.PROM_DOMESTICO]
 
 # cria o mago do RABITMQ
 def inic_conec(exch):
@@ -47,6 +49,10 @@ def main():
 	print(f"[] interessado em {RK_1}")
 	bind_fila(ch, FILA, defs.EXCH, RK_2)
 	print(f"[] interessado em {RK_2}")
+	bind_fila(ch, FILA, defs.EXCH, RK_3)
+	print(f"[] interessado em {RK_3}")
+	bind_fila(ch, FILA, defs.EXCH, RK_4)
+	print(f"[] interessado em {RK_4}")
 	print("[] iniciando consumo")
 	consumir(ch, FILA)
 	connection.close()
