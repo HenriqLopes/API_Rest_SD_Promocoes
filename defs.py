@@ -1,5 +1,6 @@
 EXCH = 'exc'
 
+#filas e keys especificas
 R_KEY_GATEWAY = 'rk_gate'
 FILA_GATEWAY = 'fl_gate'
 
@@ -12,8 +13,10 @@ FILA_RANKING = 'fl_rank'
 R_KEY_PROMOCAO = 'rk_prom'
 FILA_PROMOCAO = 'fl_prom'
 
+#key de promos validadas já
 R_KEY_VALIDAS = 'rk_vali'
 
+#definicoes do dicionario de tags
 PROM_LIVRO = 1
 PROM_ROUPA = 2
 PROM_ESPORTE = 3
@@ -30,7 +33,7 @@ R_KEYS = {
 	PROM_QUENTES: 'rk_quen'
 }
 
-#chaves
+#definicoes do dicionario de chaves publicas
 
 GATE = 1
 RANK = 2
@@ -43,12 +46,3 @@ CHAVE_PUBLICA = {
 	PROM: "pub_prom.der",
 	NOTI: "pub_noti.der",
 }
-
-'''CABECALHO = {
-	ini_bits_SHA: 0
-	tam_bits_SHA: 32
-	id_promo: 
-	voto:
-	promo
-	(nome, preço, topicos)
-}'''

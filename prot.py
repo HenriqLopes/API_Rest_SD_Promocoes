@@ -24,70 +24,40 @@ def inic_pacote():
 		("0" * TAM_BYT_RKN) )
 
 def int_para_chars(valor, tam):
-    return list(str(valor).zfill(tam)[:tam])
-
+	return list(str(valor).zfill(tam)[:tam])
 def chars_para_int(chars):
-    return int(''.join(chars) or '0')
-
+	return int(''.join(chars) or '0')
 def str_para_chars(valor, tam):
-    return list(valor.ljust(tam)[:tam])
-
+	return list(valor.ljust(tam)[:tam])
 def chars_para_str(chars):
-    return ''.join(chars).strip()
+	return ''.join(chars).strip()
 
 def escreve_sha(msg, SHA):
 	msg[INI_BYT_SHA : (INI_BYT_SHA + TAM_BYT_SHA)] = str_para_chars(SHA, TAM_BYT_SHA)
-	
 def le_sha(msg):
 	return chars_para_str(msg[INI_BYT_SHA : (INI_BYT_SHA + TAM_BYT_SHA)])
 
 def escreve_nome(msg, nome):
 	msg[INI_BYT_NOM : (INI_BYT_NOM + TAM_BYT_NOM)] = str_para_chars(nome, TAM_BYT_NOM)
-
 def le_nome(msg):
 	return chars_para_str(msg[INI_BYT_NOM : (INI_BYT_NOM + TAM_BYT_NOM)])
 
 def escreve_id(msg, id):
 	msg[INI_BYT_IDS : (INI_BYT_IDS + TAM_BYT_IDS)] = int_para_chars(id, TAM_BYT_IDS)
-
 def le_id(msg):
 	return chars_para_int(msg[INI_BYT_IDS : (INI_BYT_IDS + TAM_BYT_IDS)])
 
 def escreve_voto(msg, voto):
 	msg[INI_BYT_VOT : (INI_BYT_VOT + TAM_BYT_VOT)] = str_para_chars(voto, TAM_BYT_VOT)
-
 def le_voto(msg):
 	return chars_para_str(msg[INI_BYT_VOT : (INI_BYT_VOT + TAM_BYT_VOT)])
 
 def escreve_n_rk(msg, n_rk):
 	msg[INI_BYT_NRK : (INI_BYT_NRK + TAM_BYT_NRK)] = int_para_chars(n_rk, TAM_BYT_NRK)
-
 def le_n_rk(msg):
 	return chars_para_int(msg[INI_BYT_NRK : (INI_BYT_NRK + TAM_BYT_NRK)])
 
 def escreve_rk_num_n(msg, rk, n):
 	msg[INI_BYT_RKN + (TAM_BYT_RKN * (n - 1)) : (INI_BYT_RKN + (TAM_BYT_RKN * n))] = int_para_chars(rk, TAM_BYT_RKN)
-
 def le_rk_num_n(msg, n):
 	return chars_para_int(msg[INI_BYT_RKN +  (TAM_BYT_RKN * (n - 1)) : (INI_BYT_RKN + (TAM_BYT_RKN * n))])
-
-
-
-def main():
-	msg = inic_pacote()
-	escreve_sha(msg, "SH1SH2SH3SH4SH5SH6SH7SH8SH9SH1SH")
-	escreve_id(msg, 11)
-	escreve_voto(msg, 's')
-	escreve_n_rk(msg, 4)
-	escreve_rk_num_n(msg, 12, 3)
-	
-
-	print(le_sha(msg))
-	print(le_id(msg))
-	print(le_voto(msg))
-	print(le_n_rk(msg))
-	print(le_rk_num_n(msg, 4))
-	print(le_rk_num_n(msg, 3))
-
-if __name__ == '__main__':
-	main()
