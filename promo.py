@@ -7,6 +7,8 @@ from Crypto.PublicKey import RSA
 import defs
 import prot
 
+import base64
+
 CHAVE_PRIVADA = "chaves_privadas/priv_prom.der"
 
 # faz o hash e RSA e ve se bate com assinatura, se der ret True se não False
@@ -14,10 +16,11 @@ def valida_assinatura(msg, assinatura, quem):
 	chave_publica = defs.CHAVE_PUBLICA[quem]
 
 	key = RSA.import_key(open(chave_publica, 'rb').read())
-	h = SHA256.new(msg)
+	h = SHA256.new("".join(msg).encode())
 
 	try:
-		pkcs1_15.new(key).verify(h, assinatura)
+		assinatura_bytes = base64.b64decode(assinatura)
+		pkcs1_15.new(key).verify(h, assinatura_bytes)
 		print("The signature is valid.")
 		return True
 	except (ValueError, TypeError):
@@ -29,7 +32,8 @@ def gera_assinatura_msg(msg):
 	msg = msg.encode()
 	h = SHA256.new(msg)
 	signature = pkcs1_15.new(key).sign(h)
-	return signature
+	signature_str = base64.b64encode(signature).decode()
+	return signature_str
 
 # cria o mago do RABITMQ
 def inic_conec(exch):
@@ -57,19 +61,31 @@ def consumir(ch, fila):
 # função chamada sempre que um pacote é lido
 def callback(ch, method, properties, pacote):
 	pacote = list(chr(b) for b in pacote)
+	print("[] pacote recebido")
+	prot.print_pacote(pacote)
+
 	#pega sha do pacote
 	SHA = prot.le_sha(pacote)
 	#limpa a sha do pacote
 	prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
+
+	print("[] validando assinatura")
 	#valida se a sha ta correta, se tiver add a promo na lista
 	if valida_assinatura(pacote, SHA,defs.GATE):
-		prot.escreve_SHA(pacote,gera_assinatura_msg(prot.pacote_para_string(pacote))) 
-		envia_msg(ch,pacote,defs.R_KEY_VALIDAS,defs.EXCH)
+		print("[] assinatura valida")
+		prot.escreve_sha(pacote,gera_assinatura_msg(prot.pacote_para_string(pacote))) 
+		print("[] postando promo como validada")
+		envia_msg(ch, prot.pacote_para_string(pacote),defs.R_KEY_VALIDAS,defs.EXCH)
+	else:
+		print("[] assinatura invalida")
 
 def main():
 	connection, ch = inic_conec(defs.EXCH)
+	print("[] conexão iniciada")
 	inic_fila(ch, defs.FILA_PROMOCAO, defs.EXCH)
+	print("[] fila iniciada iniciada")
 	bind_fila(ch, defs.FILA_PROMOCAO, defs.EXCH, defs.R_KEY_PROMOCAO)
+	print("[] iniciando consumo")
 	consumir(ch, defs.FILA_PROMOCAO)
 	connection.close()
 

@@ -1,14 +1,14 @@
 INI_BYT_SHA = 0
-TAM_BYT_SHA = 32
-INI_BYT_NOM = 32
+TAM_BYT_SHA = 344
+INI_BYT_NOM = INI_BYT_SHA + TAM_BYT_SHA
 TAM_BYT_NOM = 23
-INI_BYT_IDS = 55
+INI_BYT_IDS = INI_BYT_NOM + TAM_BYT_NOM
 TAM_BYT_IDS = 4
-INI_BYT_VOT = 59
+INI_BYT_VOT = INI_BYT_IDS + TAM_BYT_IDS
 TAM_BYT_VOT = 1
-INI_BYT_NRK = 60
+INI_BYT_NRK = INI_BYT_VOT + TAM_BYT_VOT
 TAM_BYT_NRK = 4
-INI_BYT_RKN = 64
+INI_BYT_RKN = INI_BYT_NRK + TAM_BYT_NRK
 TAM_BYT_RKN = 4
 
 def inic_pacote():
@@ -69,3 +69,8 @@ def escreve_rk_num_n(msg, rk, n):
 	msg[INI_BYT_RKN + (TAM_BYT_RKN * (n - 1)) : (INI_BYT_RKN + (TAM_BYT_RKN * n))] = int_para_chars(rk, TAM_BYT_RKN)
 def le_rk_num_n(msg, n):
 	return chars_para_int(msg[INI_BYT_RKN +  (TAM_BYT_RKN * (n - 1)) : (INI_BYT_RKN + (TAM_BYT_RKN * n))])
+
+def print_pacote(msg):
+	print(f"{le_id(msg)}: {le_nome(msg)} {le_voto(msg)}")
+	print(le_sha(msg))
+	print(f"{le_n_rk(msg)}: {le_rk_num_n(msg, 1)}, {le_rk_num_n(msg, 2)}, {le_rk_num_n(msg, 3)}, {le_rk_num_n(msg, 4)}")

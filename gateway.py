@@ -7,6 +7,8 @@ from Crypto.PublicKey import RSA
 import defs
 import prot
 
+import base64
+
 #estrutura que armazena as promos ja validas
 dict_promo = {}
 
@@ -17,10 +19,12 @@ def valida_assinatura(msg, assinatura, quem):
 	chave_publica = defs.CHAVE_PUBLICA[quem]
 
 	key = RSA.import_key(open(chave_publica, 'rb').read())
-	h = SHA256.new(msg)
+	msg_bytes = "".join(msg).encode()
+	h = SHA256.new(msg_bytes)
 
 	try:
-		pkcs1_15.new(key).verify(h, assinatura)
+		assinatura_bytes = base64.b64decode(assinatura)
+		pkcs1_15.new(key).verify(h, assinatura_bytes)
 		print("The signature is valid.")
 		return True
 	except (ValueError, TypeError):
@@ -32,7 +36,8 @@ def gera_assinatura_msg(msg):
 	msg = msg.encode()
 	h = SHA256.new(msg)
 	signature = pkcs1_15.new(key).sign(h)
-	return signature
+	signature_str = base64.b64encode(signature).decode()
+	return signature_str
 
 # cria o mago do RABITMQ
 def inic_conec(exch):
@@ -60,14 +65,24 @@ def consumir(ch, fila):
 # função chamada sempre que um pacote é lido
 def callback(ch, method, properties, body):
 	global dict_promo
+	print("[] pacote recebido")
 	pacote = list(chr(b) for b in body)
+	prot.print_pacote(pacote)
+
 	#pega sha do pacote
 	SHA = prot.le_sha(pacote)
 	#limpa a sha do pacote
 	prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
 	#valida se a sha ta correta, se tiver add a promo na lista
-	if valida_assinatura(pacote, SHA,defs.CHAVE_PUBLICA[defs.PROM]):
-		dict_promo[prot.le_id(pacote)] = pacote
+	print("[] validando assinatura")
+	if valida_assinatura(pacote, SHA,defs.PROM):
+		print("[] assinatura valida")
+		id = prot.le_id(pacote)
+		dict_promo[id] = pacote
+		prot.print_pacote(dict_promo[id])
+	else:
+		print("[] assinatura invalida")
+	print("[] encerrando consumo")
 	ch.stop_consuming()
 # recebe escolha do cliente
 def interface_cliente():
@@ -140,9 +155,12 @@ def envia_voto(ch, dados):
 	return
 
 def main():
+	global dict_promo
 	id = 0
 	connection, ch = inic_conec(defs.EXCH)
+	print("[] conexão iniciada")
 	inic_fila(ch, defs.FILA_GATEWAY, defs.EXCH)
+	print("[] fila iniciada")
 	bind_fila(ch, defs.FILA_GATEWAY, defs.EXCH, defs.R_KEY_VALIDAS)
 	escolha_cliente = interface_cliente()
 	#loop principal
@@ -154,22 +172,31 @@ def main():
 
 			nome_promo = str(input("Nome da promoção: "))
 			prot.escreve_nome(pacote, nome_promo)
+			print(f"[] nome adicionado: {prot.le_nome(pacote)}")
 
 			n_rk = int(input("Quantidade de tags: "))
 			for i in range(n_rk): 
-				print(f"Quais tags a promoção tem? \n [{defs.PROM_ROUPA}] Roupa \n [{defs.PROM_ESPORTE}] Esporte \n [{defs.PROM_DOMESTICO}] Doméstico \n [{defs.PROM_COMIDA}] Comida \n [{defs.PROM_LIVRO}] Livro")
+				print(f"Quais tags a promoção tem? \n [{defs.PROM_LIVRO}] Livro \n [{defs.PROM_ROUPA}] Roupa \n [{defs.PROM_ESPORTE}] Esporte \n [{defs.PROM_DOMESTICO}] Doméstico \n [{defs.PROM_COMIDA}] Comida")
 				tag = int(input("> "))
-				prot.escreve_rk_num_n(pacote, tag, i)
+				prot.escreve_rk_num_n(pacote, tag, i + 1)
+			print(f"[] {prot.le_n_rk(pacote)} rk adicionada(s): {prot.le_rk_num_n(pacote,1)}, {prot.le_rk_num_n(pacote,2)},{prot.le_rk_num_n(pacote,3)},{prot.le_rk_num_n(pacote,4)}")
 
 			prot.escreve_id(pacote, id)
 			id += 1
+			print(f"[] id adicionado: {prot.le_id(pacote)}")
 
 			prot.escreve_sha(pacote, gera_assinatura_msg(prot.chars_para_str(pacote)))
+			print(f"[] SHA adicionada: {prot.le_sha(pacote)}")
 
+			print("[] pacote completo")
+			prot.print_pacote(pacote)
+			
 			#envia o pacote montado
+			print("[] enviando para promo")
 			envia_promo(ch, prot.pacote_para_string(pacote))
 
 			#espera o resposta do pacote
+			print("[] iniciando consumo")
 			consumir(ch, defs.FILA_GATEWAY)
 
 		# escolha votar promo
@@ -182,7 +209,9 @@ def main():
 
 		# escolha listar promocoes
 		elif (escolha_cliente == 3):
-			for pacote in dict_promo:
+			
+			for i in range(len(dict_promo)):
+				pacote = dict_promo[i]
 				print(f"{prot.le_id(pacote)}: {prot.le_nome(pacote)}")
 		
 		elif (escolha_cliente == 4):
