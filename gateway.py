@@ -25,10 +25,8 @@ def valida_assinatura(msg, assinatura, quem):
 	try:
 		assinatura_bytes = base64.b64decode(assinatura)
 		pkcs1_15.new(key).verify(h, assinatura_bytes)
-		print("The signature is valid.")
 		return True
 	except (ValueError, TypeError):
-		print("The signature is not valid.")
 		return False
 # gera um SHA da msg encodada.
 def gera_assinatura_msg(msg):
@@ -175,8 +173,9 @@ def main():
 			print(f"[] nome adicionado: {prot.le_nome(pacote)}")
 
 			n_rk = int(input("Quantidade de tags: "))
+			prot.escreve_n_rk(pacote, n_rk)
 			for i in range(n_rk): 
-				print(f"Quais tags a promoção tem? \n [{defs.PROM_LIVRO}] Livro \n [{defs.PROM_ROUPA}] Roupa \n [{defs.PROM_ESPORTE}] Esporte \n [{defs.PROM_DOMESTICO}] Doméstico \n [{defs.PROM_COMIDA}] Comida")
+				print(f"Quais tags a promoção tem? \n [1] Comida \n [2] Livro \n [3] Roupa \n [4] Esporte \n [5] Doméstico")
 				tag = int(input("> "))
 				prot.escreve_rk_num_n(pacote, tag, i + 1)
 			print(f"[] {prot.le_n_rk(pacote)} rk adicionada(s): {prot.le_rk_num_n(pacote,1)}, {prot.le_rk_num_n(pacote,2)},{prot.le_rk_num_n(pacote,3)},{prot.le_rk_num_n(pacote,4)}")
@@ -201,11 +200,18 @@ def main():
 
 		# escolha votar promo
 		elif (escolha_cliente == 2):
-			id = input("ID: ")
-			if(id in dict_promo):
-				pacote = dict_promo[id]
-				prot.escreve_voto(pacote, 's')
-				envia_voto(ch, pacote)
+			id = int(input("ID: "))
+
+			pacote = dict_promo[id]
+			prot.escreve_voto(pacote, 's')
+
+			#as veiz ele usa ponteiro as veiz ele n quer, ent esse é pra garantir
+			prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
+
+			prot.escreve_sha(pacote, gera_assinatura_msg(prot.chars_para_str(pacote)))
+			print(f"[] SHA adicionada: {prot.le_sha(pacote)}")
+
+			envia_voto(ch, prot.pacote_para_string(pacote))
 
 		# escolha listar promocoes
 		elif (escolha_cliente == 3):

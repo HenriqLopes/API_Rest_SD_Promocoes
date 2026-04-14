@@ -16,15 +16,14 @@ def valida_assinatura(msg, assinatura, quem):
 	chave_publica = defs.CHAVE_PUBLICA[quem]
 
 	key = RSA.import_key(open(chave_publica, 'rb').read())
-	h = SHA256.new("".join(msg).encode())
+	msg_bytes = "".join(msg).encode()
+	h = SHA256.new(msg_bytes)
 
 	try:
 		assinatura_bytes = base64.b64decode(assinatura)
 		pkcs1_15.new(key).verify(h, assinatura_bytes)
-		print("The signature is valid.")
 		return True
 	except (ValueError, TypeError):
-		print("The signature is not valid.")
 		return False
 # gera um SHA da msg encodada.
 def gera_assinatura_msg(msg):
@@ -34,6 +33,7 @@ def gera_assinatura_msg(msg):
 	signature = pkcs1_15.new(key).sign(h)
 	signature_str = base64.b64encode(signature).decode()
 	return signature_str
+
 
 # cria o mago do RABITMQ
 def inic_conec(exch):

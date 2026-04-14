@@ -7,6 +7,8 @@ from Crypto.PublicKey import RSA
 import defs
 import prot
 
+import base64
+
 CHAVE_PRIVADA = "chaves_privadas/priv_noti.der"
 
 # faz o hash e RSA e ve se bate com assinatura, se der ret True se não False
@@ -14,14 +16,14 @@ def valida_assinatura(msg, assinatura, quem):
 	chave_publica = defs.CHAVE_PUBLICA[quem]
 
 	key = RSA.import_key(open(chave_publica, 'rb').read())
-	h = SHA256.new(msg)
+	msg_bytes = "".join(msg).encode()
+	h = SHA256.new(msg_bytes)
 
 	try:
-		pkcs1_15.new(key).verify(h, assinatura)
-		print("The signature is valid.")
+		assinatura_bytes = base64.b64decode(assinatura)
+		pkcs1_15.new(key).verify(h, assinatura_bytes)
 		return True
 	except (ValueError, TypeError):
-		print("The signature is not valid.")
 		return False
 # gera um SHA da msg encodada.
 def gera_assinatura_msg(msg):
@@ -29,7 +31,8 @@ def gera_assinatura_msg(msg):
 	msg = msg.encode()
 	h = SHA256.new(msg)
 	signature = pkcs1_15.new(key).sign(h)
-	return signature
+	signature_str = base64.b64encode(signature).decode()
+	return signature_str
 
 # cria o mago do RABITMQ
 def inic_conec(exch):
@@ -42,7 +45,7 @@ def inic_conec(exch):
 	return connection, ch
 # envia uma msg para uma chave parametro
 def envia_msg(ch, msg, key, exch):
-	ch.basic_publish(exchange=exch, routing_key=key, pacote=msg)
+	ch.basic_publish(exchange=exch, routing_key=key, body=msg)
 # cria uma nova fila
 def inic_fila(ch, fila, exch):
 	ch.queue_declare(queue=fila, durable=True, arguments={'x-queue-type': 'quorum'})
@@ -56,22 +59,35 @@ def consumir(ch, fila):
 	ch.start_consuming()
 # função chamada sempre que um pacote é lido
 def callback(ch, method, properties, pacote):
+	pacote = list(chr(b) for b in pacote)
+	print("[] pacote recebido")
+	prot.print_pacote(pacote)
+
 	#pega sha do pacote
 	SHA = prot.le_sha(pacote)
 	#limpa a sha do pacote
 	prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
-	#valida se a sha ta correta, se tiver add a promo na lista
-	if valida_assinatura(pacote, SHA,defs.CHAVE_PUBLICA[defs.PROM]):
+
+	print("[] validando assinatura")
+	if valida_assinatura(pacote, SHA,defs.PROM):
+		print("[] assinatura valida")
 		n_keys = prot.le_n_rk(pacote)
+		print(f"[] publicando em {n_keys} tags")
 		#envia para todas as chaves da promo
 		for i in range(n_keys): 
 			key = prot.le_rk_num_n(pacote, i)
-			envia_msg(ch, pacote, defs.R_KEYS[key], defs.EXCH)
+			print(f"[] enviando para tag: {defs.R_KEYS[key]}")
+			envia_msg(ch, prot.pacote_para_string(pacote), defs.R_KEYS[key], defs.EXCH)
+	else:
+		print("[] assinatura invalida")
 
 def main():
 	connection, ch = inic_conec(defs.EXCH)
+	print("[] conexão iniciada")
 	inic_fila(ch, defs.FILA_NOTIFICA, defs.EXCH)
+	print("[] fila iniciada")
 	bind_fila(ch, defs.FILA_NOTIFICA, defs.EXCH, defs.R_KEY_VALIDAS)
+	print("[] iniciando consumo")
 	consumir(ch, defs.FILA_NOTIFICA)
 	connection.close()
 

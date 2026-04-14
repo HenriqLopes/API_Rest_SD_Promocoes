@@ -7,6 +7,8 @@ from Crypto.PublicKey import RSA
 import defs
 import prot
 
+import base64
+
 dict_promo = {}
 
 CHAVE_PRIVADA = "chaves_privadas/priv_rank.der"
@@ -18,14 +20,14 @@ def valida_assinatura(msg, assinatura, quem):
 	chave_publica = defs.CHAVE_PUBLICA[quem]
 
 	key = RSA.import_key(open(chave_publica, 'rb').read())
-	h = SHA256.new(msg)
+	msg_bytes = "".join(msg).encode()
+	h = SHA256.new(msg_bytes)
 
 	try:
-		pkcs1_15.new(key).verify(h, assinatura)
-		print("The signature is valid.")
+		assinatura_bytes = base64.b64decode(assinatura)
+		pkcs1_15.new(key).verify(h, assinatura_bytes)
 		return True
 	except (ValueError, TypeError):
-		print("The signature is not valid.")
 		return False
 # gera um SHA da msg encodada.
 def gera_assinatura_msg(msg):
@@ -33,7 +35,8 @@ def gera_assinatura_msg(msg):
 	msg = msg.encode()
 	h = SHA256.new(msg)
 	signature = pkcs1_15.new(key).sign(h)
-	return signature
+	signature_str = base64.b64encode(signature).decode()
+	return signature_str
 
 # cria o mago do RABITMQ
 def inic_conec(exch):
@@ -46,7 +49,7 @@ def inic_conec(exch):
 	return connection, ch
 # envia uma msg para uma chave parametro
 def envia_msg(ch, msg, key, exch):
-	ch.basic_publish(exchange=exch, routing_key=key, pacote=msg)
+	ch.basic_publish(exchange=exch, routing_key=key, body=msg)
 # cria uma nova fila
 def inic_fila(ch, fila, exch):
 	ch.queue_declare(queue=fila, durable=True, arguments={'x-queue-type': 'quorum'})
@@ -60,27 +63,45 @@ def consumir(ch, fila):
 	ch.start_consuming()
 # função chamada sempre que um pacote é lido
 def callback(ch, method, properties, pacote):
+	global dict_promo
+	
+	pacote = list(chr(b) for b in pacote)
+	print("[] pacote recebido")
+	prot.print_pacote(pacote)
+
 	#pega sha do pacote
 	SHA = prot.le_sha(pacote)
 	#limpa a sha do pacote
 	prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
+
+	print("[] validando assinatura")
 	#valida se a sha ta correta, se tiver add a promo na lista
-	if valida_assinatura(pacote, SHA, defs.CHAVE_PUBLICA[defs.GATE]):
+	if valida_assinatura(pacote, SHA, defs.GATE):
+		print("[] assinatura valida")
 		id = prot.le_id(pacote)
+
 		if id in dict_promo:
 			pac, n = dict_promo[id]
 			n += 1
+			print(f"[] promo de id {id} com {n} votos")
 			if n > VOTES_HOT_DEAL:
-				prot.escreve_SHA(pacote,prot.chars_para_str(gera_assinatura_msg(pacote))) 
-				envia_msg(ch, pacote, defs.R_KEY_PROM_QUENTES, defs.EXCH)
+				prot.escreve_sha(pacote,(gera_assinatura_msg(prot.chars_para_str(pacote)))) 
+				print(f"[] enviando para tag: {defs.R_KEYS[defs.PROM_QUENTES]}")
+				envia_msg(ch, prot.pacote_para_string(pacote), defs.R_KEYS[defs.PROM_QUENTES], defs.EXCH)
 			dict_promo[id] = (pac, n)
 		else:
 			dict_promo[id] = (pacote, 1)
+			print(f"[] promo de id {id} com {1} voto")
+	else:
+		print("[] assinatura invalida")
 
 def main():
 	connection, ch = inic_conec(defs.EXCH)
+	print("[] conexão iniciada")
 	inic_fila(ch, defs.FILA_RANKING, defs.EXCH)
+	print("[] fila iniciada")
 	bind_fila(ch, defs.FILA_RANKING, defs.EXCH, defs.R_KEY_RANKING)
+	print("[] iniciando consumo")
 	consumir(ch, defs.FILA_RANKING)
 	connection.close()
 
