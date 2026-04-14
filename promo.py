@@ -42,7 +42,7 @@ def inic_conec(exch):
 	return connection, ch
 # envia uma msg para uma chave parametro
 def envia_msg(ch, msg, key, exch):
-	ch.basic_publish(exchange=exch, routing_key=key, pacote=msg)
+	ch.basic_publish(exchange=exch, routing_key=key, body=msg)
 # cria uma nova fila
 def inic_fila(ch, fila, exch):
 	ch.queue_declare(queue=fila, durable=True, arguments={'x-queue-type': 'quorum'})
@@ -56,13 +56,14 @@ def consumir(ch, fila):
 	ch.start_consuming()
 # função chamada sempre que um pacote é lido
 def callback(ch, method, properties, pacote):
+	pacote = list(chr(b) for b in pacote)
 	#pega sha do pacote
 	SHA = prot.le_sha(pacote)
 	#limpa a sha do pacote
 	prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
 	#valida se a sha ta correta, se tiver add a promo na lista
-	if valida_assinatura(pacote, SHA,defs.CHAVE_PUBLICA[defs.GATE]):
-		prot.escreve_SHA(pacote,prot.chars_para_str(gera_assinatura_msg(pacote))) 
+	if valida_assinatura(pacote, SHA,defs.GATE):
+		prot.escreve_SHA(pacote,gera_assinatura_msg(prot.pacote_para_string(pacote))) 
 		envia_msg(ch,pacote,defs.R_KEY_VALIDAS,defs.EXCH)
 
 def main():

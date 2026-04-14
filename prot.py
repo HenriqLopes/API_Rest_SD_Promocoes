@@ -30,7 +30,15 @@ def chars_para_int(chars):
 def str_para_chars(valor, tam):
 	return list(valor.ljust(tam)[:tam])
 def chars_para_str(chars):
-	return ''.join(chars).strip()
+	resultado = ""
+	for c in chars:
+		resultado += str(c)
+	return str(resultado)
+def pacote_para_string(pacote):
+	resultado = ""
+	for c in pacote:
+		resultado += str(c)
+	return str(resultado)
 
 def escreve_sha(msg, SHA):
 	msg[INI_BYT_SHA : (INI_BYT_SHA + TAM_BYT_SHA)] = str_para_chars(SHA, TAM_BYT_SHA)

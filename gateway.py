@@ -60,13 +60,14 @@ def consumir(ch, fila):
 # função chamada sempre que um pacote é lido
 def callback(ch, method, properties, body):
 	global dict_promo
+	pacote = list(chr(b) for b in body)
 	#pega sha do pacote
-	SHA = prot.le_sha(body)
+	SHA = prot.le_sha(pacote)
 	#limpa a sha do pacote
-	prot.escreve_sha(body,("0" * prot.TAM_BYT_SHA))
+	prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
 	#valida se a sha ta correta, se tiver add a promo na lista
-	if valida_assinatura(body, SHA,defs.CHAVE_PUBLICA[defs.PROM]):
-		dict_promo[prot.le_id(body)] = body
+	if valida_assinatura(pacote, SHA,defs.CHAVE_PUBLICA[defs.PROM]):
+		dict_promo[prot.le_id(pacote)] = pacote
 	ch.stop_consuming()
 # recebe escolha do cliente
 def interface_cliente():
@@ -166,7 +167,7 @@ def main():
 			prot.escreve_sha(pacote, gera_assinatura_msg(prot.chars_para_str(pacote)))
 
 			#envia o pacote montado
-			envia_promo(ch, pacote)
+			envia_promo(ch, prot.pacote_para_string(pacote))
 
 			#espera o resposta do pacote
 			consumir(ch, defs.FILA_GATEWAY)

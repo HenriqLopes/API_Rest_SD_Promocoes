@@ -41,8 +41,8 @@ PROM = 3
 NOTI = 4
 
 CHAVE_PUBLICA = {
-	GATE: "chaves_publicas/pub_gate.der",
-	RANK: "chaves_publicas/pub_rank.der",
-	PROM: "chaves_publicas/pub_prom.der",
-	NOTI: "chaves_publicas/pub_noti.der",
+	GATE: 'chaves_publicas/pub_gate.der',
+	RANK: 'chaves_publicas/pub_rank.der',
+	PROM: 'chaves_publicas/pub_prom.der',
+	NOTI: 'chaves_publicas/pub_noti.der',
 }
