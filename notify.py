@@ -9,6 +9,11 @@ import prot
 
 import base64
 
+
+#bibliotecas necessárias para envio do e-mail
+import os
+import resend 
+
 CHAVE_PRIVADA = "chaves_privadas/priv_noti.der"
 
 # faz o hash e RSA e ve se bate com assinatura, se der ret True se não False

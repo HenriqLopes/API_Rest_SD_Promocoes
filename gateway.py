@@ -1,3 +1,5 @@
+#API 
+
 import pika
 
 from Crypto.Signature import pkcs1_15
@@ -8,6 +10,10 @@ import defs
 import prot
 
 import base64
+
+from flask import Flask, jsonify, request
+
+app = Flask(__name__)
 
 #estrutura que armazena as promos ja validas
 dict_promo = {}
@@ -28,38 +34,40 @@ def valida_assinatura(msg, assinatura, quem):
 		return True
 	except (ValueError, TypeError):
 		return False
+	
 # gera um SHA da msg encodada.
 def gera_assinatura_msg(msg):
 	key = RSA.import_key(open(CHAVE_PRIVADA, 'rb').read())
-	msg = msg.encode()
-	h = SHA256.new(msg)
+	h = SHA256.new(msg.encode())
 	signature = pkcs1_15.new(key).sign(h)
-	signature_str = base64.b64encode(signature).decode()
-	return signature_str
+	return base64.b64encode(signature).decode()
 
 # cria o mago do RABITMQ
 def inic_conec(exch):
 	connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
 	ch = connection.channel()
-
 	ch.exchange_declare(exchange=exch, exchange_type='direct')
 	ch.confirm_delivery()
-
 	return connection, ch
+
 # envia uma msg para uma chave parametro
 def envia_msg(ch, msg, key, exch):
 	ch.basic_publish(exchange=exch, routing_key=key, body=msg)
+
 # cria uma nova fila
 def inic_fila(ch, fila, exch):
 	ch.queue_declare(queue=fila, durable=True, arguments={'x-queue-type': 'quorum'})
 	ch.exchange_declare(exchange=exch, exchange_type='direct')
+
 # inscreve a sua fila em uma determinada chave
 def bind_fila(ch, fila, exch, key):
 	ch.queue_bind(exchange=exch, queue=fila, routing_key=key)
+
 # bloqueia eternamente pra ficar só consumindo sua fila
-def consumir(ch, fila):
+def consumir(ch, fila): #Acho que não vai mais ser necessário, porque vai virar a interface web
 	ch.basic_consume(queue=fila, auto_ack=True, on_message_callback=callback)
 	ch.start_consuming()
+
 # função chamada sempre que um pacote é lido
 def callback(ch, method, properties, body):
 	global dict_promo
@@ -82,6 +90,7 @@ def callback(ch, method, properties, body):
 		print("[] assinatura invalida")
 	print("[] encerrando consumo")
 	ch.stop_consuming()
+
 # recebe escolha do cliente
 def interface_cliente():
 	return int(input(" [1] Adicionar nova promoção \n [2] Votar promoções \n [3] Listar promoções \n [4] Sair\n >"))
@@ -90,10 +99,33 @@ def interface_cliente():
 def envia_promo(ch, dados):
 	envia_msg(ch, dados, defs.R_KEY_PROMOCAO, defs.EXCH)
 	return
+
 # envia um pacote ja finalizado para RANK
 def envia_voto(ch, dados):
 	envia_msg(ch, dados, defs.R_KEY_RANKING, defs.EXCH)
 	return
+
+'''
+@app.route("/promocoes", methods=["POST"])
+def criar_promocao():
+
+	return json({id_promo, nome_promo,categoria_promo}),201 # status 201 = created
+'''
+
+'''
+@app.route("/promocoes", methods=["GET"])
+def lista_promocoes():
+
+	return json_de_promoco, 200 # status 200 = OK
+'''
+
+'''
+@app.route("/promocoes/<int:id_promo>/voto", methods=["POST"])
+def vota_promo(promo_id):
+	if clicou botão +:
+		voto + 1
+	return json({voto registrado, id_promo}) # status 200 = OK
+'''
 
 def main():
 	global dict_promo
