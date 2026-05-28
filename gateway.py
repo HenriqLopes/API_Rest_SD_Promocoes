@@ -106,25 +106,76 @@ def envia_voto(ch, dados):
 	return
 
 '''
+#Cria promoção e amenta contador
 @app.route("/promocoes", methods=["POST"])
 def criar_promocao():
+	new_item = request.get_json()
+    new_id = len(items) + 1
+    new_item["id"] = new_id
+    items[new_id] = new_item
 
-	return json({id_promo, nome_promo,categoria_promo}),201 # status 201 = created
+    return jsonify(new_item), 201
 '''
 
 '''
+#Busca todas as promoções, sem categoria
 @app.route("/promocoes", methods=["GET"])
 def lista_promocoes():
-
-	return json_de_promoco, 200 # status 200 = OK
+	return jsonify(items), 200
 '''
 
 '''
-@app.route("/promocoes/<int:id_promo>/voto", methods=["POST"])
-def vota_promo(promo_id):
-	if clicou botão +:
-		voto + 1
-	return json({voto registrado, id_promo}) # status 200 = OK
+#Busca as promoções por categoria
+@app.route('promocoes/<int:item_id>', methods=["GET"])
+def lista_promocao_id():
+	item = items.get(item_id)
+
+    if item:
+        return jsonify(
+			"resposta": "Promoção encontrada",
+			"item": item
+		), 200
+    
+    return jsonify({"error": "Item not found"}), 404
+'''
+
+'''
+#Atualiza os campos individuais das promoções
+@app.route('/items/<int:item_id>', methods=['PATCH'])
+def atualiza_promo(item_id):
+
+    item = items.get(item_id)
+
+    if  not  item:
+        return jsonify({"error": "item not found"}), 404
+
+    updated_data = request.get_json()
+
+    for chave, valor in updated_data.items():
+        #Consegue votar na promo por aqui
+        if chave == "voto":
+                item[chave] += valor
+
+        else:
+            item[chave] = valor
+        
+    return jsonify({
+        "mensagem": "Promoção alterada com sucesso",
+        "retorno": item,
+        }),200  
+'''
+
+'''
+#Permite apagar uma promoção (Se pá nem vamos usar)
+@app.route('/promocoes/<int:item_id>', methods=["DELETE"])
+def apaga_promocao(item_id):
+	item = items.get(item_id)
+
+    if item:
+        del item[item_id]
+        return jsonify({"message": "Item deleted"}), 200
+    else:
+        return jsonify({"error": "Item not found"}), 404
 '''
 
 def main():
