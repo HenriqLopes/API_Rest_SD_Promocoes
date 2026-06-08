@@ -1,0 +1,57 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { PageShell } from "@/components/page-shell";
+import { PromoGrid } from "@/components/promo-grid";
+import { PROMOTIONS } from "@/lib/mock-data";
+import { useInterests } from "@/hooks/use-interests";
+
+export const Route = createFileRoute("/minhas-categorias")({
+  head: () => ({
+    meta: [
+      { title: "Minhas Categorias — PROMOVALE" },
+      {
+        name: "description",
+        content: "Promoções filtradas pelas categorias que você acompanha.",
+      },
+    ],
+  }),
+  component: MinhasCategorias,
+});
+
+function MinhasCategorias() {
+  const { interests } = useInterests();
+  const filtered = PROMOTIONS.filter((p) => interests.includes(p.category));
+
+  return (
+    <PageShell>
+      <header className="mb-8">
+        <h1 className="font-display text-3xl font-bold tracking-tight">
+          Minhas categorias
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {interests.length === 0
+            ? "Você ainda não selecionou categorias de interesse."
+            : `Acompanhando: ${interests.join(", ")}`}
+        </p>
+      </header>
+
+      {interests.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-slate-300 bg-card p-12 text-center">
+          <p className="text-sm text-muted-foreground">
+            Escolha categorias para receber notificações em tempo real.
+          </p>
+          <Link
+            to="/categorias"
+            className="mt-4 inline-block rounded-xl bg-brand-orange px-5 py-2 text-sm font-bold text-white"
+          >
+            Escolher categorias
+          </Link>
+        </div>
+      ) : (
+        <PromoGrid
+          promotions={filtered}
+          emptyMessage="Sem promoções ativas nas suas categorias agora."
+        />
+      )}
+    </PageShell>
+  );
+}

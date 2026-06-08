@@ -16,7 +16,9 @@ from flask import Flask, jsonify, request
 app = Flask(__name__)
 
 #estrutura que armazena as promos ja validas
-dict_promo = {}
+dict_promo = {{
+
+	}}
 
 CHAVE_PRIVADA = "chaves_privadas/priv_gate.der"
 
@@ -106,7 +108,7 @@ def envia_voto(ch, dados):
 	return
 
 '''
-#Cria promoção e amenta contador
+#Cria promoção e aumenta contador
 @app.route("/promocoes", methods=["POST"])
 def criar_promocao():
 	new_item = request.get_json()
@@ -189,7 +191,7 @@ def main():
 	escolha_cliente = interface_cliente()
 	#loop principal
 	while (escolha_cliente != 4):
-		# escolha add promo
+		# escolha add promo	
 		if (escolha_cliente == 1):
 
 			pacote = prot.inic_pacote()

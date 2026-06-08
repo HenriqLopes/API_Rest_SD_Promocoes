@@ -1,1 +1,60 @@
-exclui isso aqui e depois apaga do git matem isso aqui > .der
+.der
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+.output
+.vinxi
+.tanstack/**
+.nitro"
+*.local
+
+# Wrangler / Cloudflare
+.wrangler/
+.dev.vars
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+.pytest_cache/
+dist-py/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Explicitly exclude private keys
+##chaves_privadas/
+##chaves_publicas/
+
+# IDE specifics
+.cursor/
+.windsurf/
