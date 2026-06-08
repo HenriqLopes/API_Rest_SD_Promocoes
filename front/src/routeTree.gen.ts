@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MinhasCategoriasRouteImport } from './routes/minhas-categorias'
 import { Route as HotDealsRouteImport } from './routes/hot-deals'
-import { Route as CategoriasRouteImport } from './routes/categorias'
 import { Route as CadastrarRouteImport } from './routes/cadastrar'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -23,11 +22,6 @@ const MinhasCategoriasRoute = MinhasCategoriasRouteImport.update({
 const HotDealsRoute = HotDealsRouteImport.update({
   id: '/hot-deals',
   path: '/hot-deals',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CategoriasRoute = CategoriasRouteImport.update({
-  id: '/categorias',
-  path: '/categorias',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CadastrarRoute = CadastrarRouteImport.update({
@@ -44,14 +38,12 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cadastrar': typeof CadastrarRoute
-  '/categorias': typeof CategoriasRoute
   '/hot-deals': typeof HotDealsRoute
   '/minhas-categorias': typeof MinhasCategoriasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cadastrar': typeof CadastrarRoute
-  '/categorias': typeof CategoriasRoute
   '/hot-deals': typeof HotDealsRoute
   '/minhas-categorias': typeof MinhasCategoriasRoute
 }
@@ -59,33 +51,20 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cadastrar': typeof CadastrarRoute
-  '/categorias': typeof CategoriasRoute
   '/hot-deals': typeof HotDealsRoute
   '/minhas-categorias': typeof MinhasCategoriasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/cadastrar'
-    | '/categorias'
-    | '/hot-deals'
-    | '/minhas-categorias'
+  fullPaths: '/' | '/cadastrar' | '/hot-deals' | '/minhas-categorias'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cadastrar' | '/categorias' | '/hot-deals' | '/minhas-categorias'
-  id:
-    | '__root__'
-    | '/'
-    | '/cadastrar'
-    | '/categorias'
-    | '/hot-deals'
-    | '/minhas-categorias'
+  to: '/' | '/cadastrar' | '/hot-deals' | '/minhas-categorias'
+  id: '__root__' | '/' | '/cadastrar' | '/hot-deals' | '/minhas-categorias'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CadastrarRoute: typeof CadastrarRoute
-  CategoriasRoute: typeof CategoriasRoute
   HotDealsRoute: typeof HotDealsRoute
   MinhasCategoriasRoute: typeof MinhasCategoriasRoute
 }
@@ -104,13 +83,6 @@ declare module '@tanstack/react-router' {
       path: '/hot-deals'
       fullPath: '/hot-deals'
       preLoaderRoute: typeof HotDealsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/categorias': {
-      id: '/categorias'
-      path: '/categorias'
-      fullPath: '/categorias'
-      preLoaderRoute: typeof CategoriasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cadastrar': {
@@ -133,7 +105,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CadastrarRoute: CadastrarRoute,
-  CategoriasRoute: CategoriasRoute,
   HotDealsRoute: HotDealsRoute,
   MinhasCategoriasRoute: MinhasCategoriasRoute,
 }

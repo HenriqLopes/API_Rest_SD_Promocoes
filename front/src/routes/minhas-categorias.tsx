@@ -40,7 +40,7 @@ function MinhasCategorias() {
             Escolha categorias para receber notificações em tempo real.
           </p>
           <Link
-            to="/categorias"
+            to="/"
             className="mt-4 inline-block rounded-xl bg-brand-orange px-5 py-2 text-sm font-bold text-white"
           >
             Escolher categorias

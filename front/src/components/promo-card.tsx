@@ -8,15 +8,23 @@ type Props = {
   count: number;
   liked: boolean;
   onToggle: () => void;
+  highlighted?: boolean;
 };
 
 const brl = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function PromoCard({ promo, count, liked, onToggle }: Props) {
+export function PromoCard({ promo, count, liked, onToggle, highlighted }: Props) {
   const hot = isHotDeal(count);
   return (
-    <article className="group relative flex flex-col rounded-3xl border border-slate-200 bg-card p-4 transition-all hover:border-brand-orange/30 hover:shadow-xl hover:shadow-brand-orange/5">
+    <article
+      className={
+        "group relative flex flex-col rounded-3xl border bg-card p-4 transition-all hover:shadow-xl hover:shadow-brand-orange/5 " +
+        (highlighted
+          ? "border-2 border-brand-orange hover:border-brand-orange"
+          : "border-slate-200 hover:border-brand-orange/30")
+      }
+    >
       {hot && (
         <div className="absolute left-6 top-6 z-10">
           <span className="flex items-center gap-1 rounded-full bg-brand-orange px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md shadow-brand-orange/30">

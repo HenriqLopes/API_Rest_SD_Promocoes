@@ -1,11 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { Flame, Search } from "lucide-react";
 
-const navItems: { to: "/" | "/minhas-categorias" | "/hot-deals" | "/categorias"; label: string; hot?: boolean }[] = [
+const navItems: { to: "/" | "/minhas-categorias" | "/hot-deals"; label: string; hot?: boolean }[] = [
   { to: "/", label: "Todas" },
   { to: "/minhas-categorias", label: "Minhas Categorias" },
   { to: "/hot-deals", label: "Hot Deals", hot: true },
-  { to: "/categorias", label: "Categorias" },
 ];
 
 export function SiteHeader() {

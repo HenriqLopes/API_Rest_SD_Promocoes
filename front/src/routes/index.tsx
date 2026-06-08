@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell } from "@/components/page-shell";
 import { PromoGrid } from "@/components/promo-grid";
+import { CategoryPicker } from "@/components/category-picker";
 import { PROMOTIONS } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/")({
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <PageShell>
+      <CategoryPicker />
       <header className="mb-8">
         <h1 className="font-display text-3xl font-bold tracking-tight">
           Todas as promoções
@@ -29,7 +31,7 @@ function Index() {
           <span className="font-semibold text-brand-orange">Hot Deals</span>.
         </p>
       </header>
-      <PromoGrid promotions={PROMOTIONS} />
+      <PromoGrid promotions={PROMOTIONS} highlightInterests />
     </PageShell>
   );
 }
