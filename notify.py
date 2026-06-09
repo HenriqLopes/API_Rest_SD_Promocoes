@@ -1,13 +1,13 @@
 import pika
 
-from Crypto.Signature import pkcs1_15
-from Crypto.Hash import SHA256
-from Crypto.PublicKey import RSA
-
 import defs
 import prot
 
+<<<<<<< HEAD
 import base64
+=======
+import rbt
+>>>>>>> f7890056d7cf3a5d0c365b4a0674334836fd3486
 
 #bibliotecas necessárias para envio do e-mail
 import os
@@ -16,6 +16,7 @@ import resend
 
 CHAVE_PRIVADA = "chaves_privadas/priv_noti.der"
 
+<<<<<<< HEAD
 # Pega a chave da API_RESEND do .env
 load_dotenv()
 
@@ -61,6 +62,8 @@ def inic_fila(ch, fila, exch):
 # inscreve a sua fila em uma determinada chave
 def bind_fila(ch, fila, exch, key):
 	ch.queue_bind(exchange=exch, queue=fila, routing_key=key)
+=======
+>>>>>>> f7890056d7cf3a5d0c365b4a0674334836fd3486
 # bloqueia eternamente pra ficar só consumindo sua fila
 def consumir(ch, fila):
 	ch.basic_consume(queue=fila, auto_ack=True, on_message_callback=callback)
@@ -77,7 +80,7 @@ def callback(ch, method, properties, pacote):
 	prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
 
 	print("[] validando assinatura")
-	if valida_assinatura(pacote, SHA,defs.PROM):
+	if rbt.valida_assinatura(pacote, SHA,defs.PROM):
 		print("[] assinatura valida")
 		n_keys = prot.le_n_rk(pacote)
 		print(f"[] publicando em {n_keys} tags")
@@ -85,16 +88,16 @@ def callback(ch, method, properties, pacote):
 		for i in range(n_keys): 
 			key = prot.le_rk_num_n(pacote, i + 1)
 			print(f"[] enviando para tag: {defs.R_KEYS[key]}")
-			envia_msg(ch, prot.pacote_para_string(pacote), defs.R_KEYS[key], defs.EXCH)
+			rbt.envia_msg(ch, prot.pacote_para_string(pacote), defs.R_KEYS[key], defs.EXCH)
 	else:
 		print("[] assinatura invalida")
 
 def main():
-	connection, ch = inic_conec(defs.EXCH)
+	connection, ch = rbt.inic_conec(defs.EXCH)
 	print("[] conexão iniciada")
-	inic_fila(ch, defs.FILA_NOTIFICA, defs.EXCH)
+	rbt.inic_fila(ch, defs.FILA_NOTIFICA, defs.EXCH)
 	print("[] fila iniciada")
-	bind_fila(ch, defs.FILA_NOTIFICA, defs.EXCH, defs.R_KEY_VALIDAS)
+	rbt.bind_fila(ch, defs.FILA_NOTIFICA, defs.EXCH, defs.R_KEY_VALIDAS)
 	print("[] iniciando consumo")
 	consumir(ch, defs.FILA_NOTIFICA)
 	connection.close()

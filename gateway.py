@@ -2,74 +2,33 @@
 
 import pika
 
-from Crypto.Signature import pkcs1_15
-from Crypto.Hash import SHA256
-from Crypto.PublicKey import RSA
-
 import defs
 import prot
-
-import base64
+import rbt
 
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
 #estrutura que armazena as promos ja validas
+<<<<<<< HEAD
 dict_promo = {{
 
 	}}
+=======
+# dicionario de dicionarios
+dict_promo = {}
+>>>>>>> f7890056d7cf3a5d0c365b4a0674334836fd3486
+
+#para Rest, dicionario de dicionarios facilmente convertido em JSON 
+itens = {}
 
 CHAVE_PRIVADA = "chaves_privadas/priv_gate.der"
-
-# faz o hash e RSA e ve se bate com assinatura, se der ret True se não False
-def valida_assinatura(msg, assinatura, quem):
-	chave_publica = defs.CHAVE_PUBLICA[quem]
-
-	key = RSA.import_key(open(chave_publica, 'rb').read())
-	msg_bytes = "".join(msg).encode()
-	h = SHA256.new(msg_bytes)
-
-	try:
-		assinatura_bytes = base64.b64decode(assinatura)
-		pkcs1_15.new(key).verify(h, assinatura_bytes)
-		return True
-	except (ValueError, TypeError):
-		return False
-	
-# gera um SHA da msg encodada.
-def gera_assinatura_msg(msg):
-	key = RSA.import_key(open(CHAVE_PRIVADA, 'rb').read())
-	h = SHA256.new(msg.encode())
-	signature = pkcs1_15.new(key).sign(h)
-	return base64.b64encode(signature).decode()
-
-# cria o mago do RABITMQ
-def inic_conec(exch):
-	connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-	ch = connection.channel()
-	ch.exchange_declare(exchange=exch, exchange_type='direct')
-	ch.confirm_delivery()
-	return connection, ch
-
-# envia uma msg para uma chave parametro
-def envia_msg(ch, msg, key, exch):
-	ch.basic_publish(exchange=exch, routing_key=key, body=msg)
-
-# cria uma nova fila
-def inic_fila(ch, fila, exch):
-	ch.queue_declare(queue=fila, durable=True, arguments={'x-queue-type': 'quorum'})
-	ch.exchange_declare(exchange=exch, exchange_type='direct')
-
-# inscreve a sua fila em uma determinada chave
-def bind_fila(ch, fila, exch, key):
-	ch.queue_bind(exchange=exch, queue=fila, routing_key=key)
 
 # bloqueia eternamente pra ficar só consumindo sua fila
 def consumir(ch, fila): #Acho que não vai mais ser necessário, porque vai virar a interface web
 	ch.basic_consume(queue=fila, auto_ack=True, on_message_callback=callback)
 	ch.start_consuming()
-
 # função chamada sempre que um pacote é lido
 def callback(ch, method, properties, body):
 	global dict_promo
@@ -83,7 +42,7 @@ def callback(ch, method, properties, body):
 	prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
 	#valida se a sha ta correta, se tiver add a promo na lista
 	print("[] validando assinatura")
-	if valida_assinatura(pacote, SHA,defs.PROM):
+	if rbt.valida_assinatura(pacote, SHA,defs.PROM):
 		print("[] assinatura valida")
 		id = prot.le_id(pacote)
 		dict_promo[id] = pacote
@@ -99,65 +58,82 @@ def interface_cliente():
 
 # envia um pacote ja finalizado para PROMO
 def envia_promo(ch, dados):
-	envia_msg(ch, dados, defs.R_KEY_PROMOCAO, defs.EXCH)
+	rbt.envia_msg(ch, dados, defs.R_KEY_PROMOCAO, defs.EXCH)
 	return
 
 # envia um pacote ja finalizado para RANK
 def envia_voto(ch, dados):
-	envia_msg(ch, dados, defs.R_KEY_RANKING, defs.EXCH)
+	rbt.envia_msg(ch, dados, defs.R_KEY_RANKING, defs.EXCH)
 	return
 
+<<<<<<< HEAD
 '''
+=======
+
+#TODO pai isso aqui ta adicionando qualquer coisa  que um usuario mandar como promoção, ou seja, paia, já que o MS_PROMO que tinha q validar né 
+
+>>>>>>> f7890056d7cf3a5d0c365b4a0674334836fd3486
 #Cria promoção e aumenta contador
 @app.route("/promocoes", methods=["POST"])
 def criar_promocao():
-	new_item = request.get_json()
-    new_id = len(items) + 1
-    new_item["id"] = new_id
-    items[new_id] = new_item
+	new_item = request.get_json() #isso ja converte um JSON pra dict
 
-    return jsonify(new_item), 201
-'''
+	#aqui entra a validação da Promo. (QUEM VALIDA? o GATE, ou o PROMO, pq agora a gente quer saber se foi a loja que assinou sabe)
+	pacote = prot.inic_pacote() #esse protocolo vai ser substituido por um JSON.
 
-'''
+	prot.escreve_sha(pacote, rbt.gera_assinatura_msg(prot.chars_para_str(pacote)))
+	print(f"[] SHA adicionada: {prot.le_sha(pacote)}")
+	#envia o pacote montado
+	print("[] enviando para promo")
+	envia_promo(ch, prot.pacote_para_string(pacote))
+	#espera o resposta do pacote
+	print("[] iniciando consumo")
+	consumir(ch, defs.FILA_GATEWAY)
+
+	#=========================================
+
+	global itens 
+	new_id = (len(itens) + 1) #novo id sequencial
+	new_item["id"] = new_id
+	itens[new_id] = new_item #ja dicionario
+
+	return jsonify(new_item), 201 #isso converte um dict pra um JSON
+
+
 #Busca todas as promoções, sem categoria
 @app.route("/promocoes", methods=["GET"])
 def lista_promocoes():
-	return jsonify(items), 200
-'''
+	global itens
+	return jsonify(itens), 200 #supondo que o email ta como ref de cada promo isso aqui é bem insguro né (ai coitado ele é todo inseguro KSKSKSK perdão).
 
-'''
 #Busca as promoções por categoria
 @app.route('promocoes/<int:item_id>', methods=["GET"])
-def lista_promocao_id():
-	item = items.get(item_id)
+def lista_promocao_id(item_id):
+	global itens
+	
+	item = itens.get(item_id)
 
-    if item:
-        return jsonify(
-			"resposta": "Promoção encontrada",
-			"item": item
-		), 200
+	if item: #se é um item
+		return jsonify(item), 200 #esse item é o dicionario de promo, que é enviado no registro. se pa nem precisa de resposta o 200 já é funcionou po.
     
-    return jsonify({"error": "Item not found"}), 404
-'''
+	return jsonify({"error": "Item not found"}), 404
 
-'''
 #Atualiza os campos individuais das promoções
 @app.route('/items/<int:item_id>', methods=['PATCH'])
-def atualiza_promo(item_id):
+def atualiza_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 
-    item = items.get(item_id)
+	global itens
 
-    if  not  item:
-        return jsonify({"error": "item not found"}), 404
+	item = itens.get(item_id)
 
-    updated_data = request.get_json()
+	if item:
+		updated_data = request.get_json()
 
-    for chave, valor in updated_data.items():
-        #Consegue votar na promo por aqui
-        if chave == "voto":
-                item[chave] += valor
+		voto = updated_data.get("voto")
+		if voto:
+			#essa parada aqui tem que ser feita pelo rank tbm n? (RANK TEM QUE CONFIRMAR PRO GATE ATUALIZAR) tudo tem que ter copia atualizada no GATE
 
+<<<<<<< HEAD
         else:
             item[chave] = valor
         
@@ -228,6 +204,8 @@ def main():
 
 		# escolha votar promo
 		elif (escolha_cliente == 2):
+=======
+>>>>>>> f7890056d7cf3a5d0c365b4a0674334836fd3486
 			id = int(input("ID: "))
 
 			pacote = dict_promo[id]
@@ -236,22 +214,45 @@ def main():
 			#as veiz ele usa ponteiro as veiz ele n quer, ent esse é pra garantir
 			prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
 
-			prot.escreve_sha(pacote, gera_assinatura_msg(prot.chars_para_str(pacote)))
+			prot.escreve_sha(pacote, rbt.gera_assinatura_msg(prot.chars_para_str(pacote)))
 			print(f"[] SHA adicionada: {prot.le_sha(pacote)}")
 
 			envia_voto(ch, prot.pacote_para_string(pacote))
 
-		# escolha listar promocoes
-		elif (escolha_cliente == 3):
-			
-			for i in range(len(dict_promo)):
-				pacote = dict_promo[i]
-				print(f"{prot.le_id(pacote)}: {prot.le_nome(pacote)}")
-		
-		elif (escolha_cliente == 4):
-			break
+			itens[item_id]["voto"] += voto
 
-		escolha_cliente = interface_cliente()
+		return jsonify(item),200  #mesma coisa, acho que n precisa dizer que alterou com sucesso, o 200 ja diz que deu boa n?
+	
+	return jsonify({"error": "item not found"}), 404
+
+#Permite apagar uma promoção (Se pá nem vamos usar)
+@app.route('/promocoes/<int:item_id>', methods=["DELETE"])
+def apaga_promocao(item_id):
+
+	global itens
+
+	item = itens.get(item_id)
+
+	if item:
+		del item[item_id] #isso funciona em pyto?
+		return jsonify({"message": "Item deleted"}), 200
+	else:
+		return jsonify({"error": "Item not found"}), 404
+
+def main():
+	global dict_promo
+	global itens
+
+	id = 0
+	connection, ch = rbt.inic_conec(defs.EXCH)
+	print("[] conexão iniciada")
+	rbt.inic_fila(ch, defs.FILA_GATEWAY, defs.EXCH)
+	print("[] fila iniciada")
+	rbt.bind_fila(ch, defs.FILA_GATEWAY, defs.EXCH, defs.R_KEY_VALIDAS)
+	escolha_cliente = interface_cliente()
+
+	#TODO tem que starta alguma coisa do rest aqui?
+	# some o loop principal pq vai ser tudo por chamada rest.
 
 	connection.close()
 
