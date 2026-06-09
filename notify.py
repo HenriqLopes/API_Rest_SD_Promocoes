@@ -103,8 +103,12 @@ def main():
 	connection.close()
 
 # Envia e-mail avisando que a promoção é uma hotdeal
-def envia_email(id_promo, nome_promo, email_loja):
+def envia_email(pacote):
 	#Pega a API do resend do .env
+	id_promo = prot.le_id(pacote)
+	email_loja = prot.le_email(pacote)
+	nome_promo = prot.le_nome(pacote)
+	
 	resend.api_key = os.getenv("API_RESEND")
 
 	r = resend.Emails.send({
