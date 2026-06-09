@@ -9,12 +9,15 @@ import prot
 
 import base64
 
-
 #bibliotecas necessárias para envio do e-mail
 import os
+from dotenv import load_dotenv
 import resend 
 
 CHAVE_PRIVADA = "chaves_privadas/priv_noti.der"
+
+# Pega a chave da API_RESEND do .env
+load_dotenv()
 
 # faz o hash e RSA e ve se bate com assinatura, se der ret True se não False
 def valida_assinatura(msg, assinatura, quem):
@@ -95,6 +98,18 @@ def main():
 	print("[] iniciando consumo")
 	consumir(ch, defs.FILA_NOTIFICA)
 	connection.close()
+
+# Envia e-mail avisando que a promoção é uma hotdeal
+def envia_email(id_promo, nome_promo, email_loja):
+	#Pega a API do resend do .env
+	resend.api_key = os.getenv("API_RESEND")
+
+	r = resend.Emails.send({
+		"from": "onboarding@resend.dev",
+		"to": "henriquelopesdebarros12345@gmail.com",
+		"subject": "${id_promo}: ${nome_promo} ",
+		"html": "<p>Parabéns, sua promooção <strong>ID: ${id_promo} ${nome_promo}</strong> virou um <strong>HOT-DEAL</strong>!</p>"
+	})
 
 if __name__ == '__main__':
 	main()
