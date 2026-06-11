@@ -1,3 +1,5 @@
+.der
+
 # Logs
 logs
 *.log
@@ -13,7 +15,7 @@ dist-ssr
 .output
 .vinxi
 .tanstack/**
-.nitro
+.nitro"
 *.local
 
 # Wrangler / Cloudflare
@@ -30,3 +32,29 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+.pytest_cache/
+dist-py/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Explicitly exclude private keys
+##chaves_privadas/
+##chaves_publicas/
+
+# IDE specifics
+.cursor/
+.windsurf/

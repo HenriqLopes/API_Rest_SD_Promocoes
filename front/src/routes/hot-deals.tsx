@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell } from "@/components/page-shell";
 import { PromoGrid } from "@/components/promo-grid";
-import { PROMOTIONS, isHotDeal } from "@/lib/mock-data";
+import { isHotDeal } from "@/lib/mock-data";
 import { useVotes } from "@/hooks/use-votes";
+import { usePromocoes } from "@/hooks/use-promocoes";
 
 export const Route = createFileRoute("/hot-deals")({
   head: () => ({
@@ -18,8 +19,10 @@ export const Route = createFileRoute("/hot-deals")({
 });
 
 function HotDeals() {
+  const { promotions, loading, isMock } = usePromocoes();
   const { adjusted } = useVotes();
-  const hot = PROMOTIONS.filter((p) => isHotDeal(adjusted(p.id, p.votes)));
+
+  const hot = promotions.filter((p) => isHotDeal(adjusted(p.id, p.votes)));
 
   return (
     <PageShell>
@@ -34,6 +37,8 @@ function HotDeals() {
       <PromoGrid
         promotions={hot}
         emptyMessage="Ainda nenhuma promoção atingiu o limite de hot deal."
+        loading={loading}
+        isMock={isMock}
       />
     </PageShell>
   );

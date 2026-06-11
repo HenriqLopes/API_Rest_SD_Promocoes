@@ -1,4 +1,4 @@
-import { Zap } from "lucide-react";
+import { Zap, Tag } from "lucide-react";
 import type { Promotion } from "@/lib/mock-data";
 import { isHotDeal } from "@/lib/mock-data";
 import { VoteControl } from "./vote-control";
@@ -13,6 +13,18 @@ type Props = {
 
 const brl = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+/** Placeholder visual no lugar da imagem do produto */
+function PromoImagePlaceholder({ category }: { category: string }) {
+  return (
+    <div className="mb-4 flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-100 outline outline-1 -outline-offset-1 outline-black/5">
+      <div className="flex flex-col items-center gap-2 text-slate-400">
+        <Tag className="h-12 w-12" strokeWidth={1.2} />
+        <span className="text-xs font-medium">{category}</span>
+      </div>
+    </div>
+  );
+}
 
 export function PromoCard({ promo, count, liked, onToggle, highlighted }: Props) {
   const hot = isHotDeal(count);
@@ -33,16 +45,9 @@ export function PromoCard({ promo, count, liked, onToggle, highlighted }: Props)
           </span>
         </div>
       )}
-      <div className="mb-4 aspect-square w-full overflow-hidden rounded-2xl bg-slate-50 outline outline-1 -outline-offset-1 outline-black/5">
-        <img
-          src={promo.image}
-          alt={promo.title}
-          loading="lazy"
-          width={1024}
-          height={1024}
-          className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
-        />
-      </div>
+
+      <PromoImagePlaceholder category={promo.category} />
+
       <div className="flex flex-1 flex-col">
         <div className="mb-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
           <span className="font-mono">ID #{promo.id}</span>
@@ -56,11 +61,26 @@ export function PromoCard({ promo, count, liked, onToggle, highlighted }: Props)
             {promo.category}
           </span>
         </div>
+
+        {/* Link para a oferta, se disponível */}
+        {promo.url && (
+          <a
+            href={promo.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mb-3 truncate text-xs text-brand-orange underline-offset-2 hover:underline"
+          >
+            Ver oferta ↗
+          </a>
+        )}
+
         <div className="mt-auto flex items-end justify-between gap-2">
           <div className="flex flex-col">
-            <span className="text-xs font-medium text-slate-400 line-through">
-              {brl(promo.originalPrice)}
-            </span>
+            {promo.originalPrice != null && promo.originalPrice > promo.price && (
+              <span className="text-xs font-medium text-slate-400 line-through">
+                {brl(promo.originalPrice)}
+              </span>
+            )}
             <span
               className={
                 hot

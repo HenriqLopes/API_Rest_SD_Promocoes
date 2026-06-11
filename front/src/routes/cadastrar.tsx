@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageShell } from "@/components/page-shell";
 import { CATEGORIES } from "@/lib/mock-data";
+import { criarPromocao } from "@/lib/api/gateway";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/cadastrar")({
@@ -20,17 +21,38 @@ export const Route = createFileRoute("/cadastrar")({
 function CadastrarPage() {
   const [submitting, setSubmitting] = useState(false);
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+
+    try {
+      const formData = new FormData(e.currentTarget);
+
+      await criarPromocao({
+        url: formData.get("url") as string,
+        store: formData.get("store") as string,
+        email: formData.get("email") as string,
+        title: formData.get("title") as string,
+        price: parseFloat(formData.get("price") as string),
+        originalPrice: formData.get("originalPrice")
+          ? parseFloat(formData.get("originalPrice") as string)
+          : undefined,
+        category: formData.get("category") as string,
+      });
+
       toast.success("Promoção enviada para validação!", {
         description:
           "Após validação da assinatura digital, será publicada na home.",
       });
-      (e.target as HTMLFormElement).reset();
-    }, 600);
+
+      (e.currentTarget as HTMLFormElement).reset();
+    } catch (error) {
+      toast.error("Erro ao enviar promoção", {
+        description: error instanceof Error ? error.message : "Tente novamente",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -94,24 +116,41 @@ function CadastrarPage() {
                   required
                   type="number"
                   step="0.01"
+                  min="0"
                   name="price"
                   className={`${inputCls} pl-12`}
                 />
               </div>
             </Field>
-            <Field label="Categoria">
-              <select required name="category" className={inputCls} defaultValue="">
-                <option value="" disabled>
-                  Selecione...
-                </option>
-                {CATEGORIES.map((c) => (
-                  <option key={c.name} value={c.name}>
-                    {c.emoji} {c.name}
-                  </option>
-                ))}
-              </select>
+            <Field label="Preço Original (opcional)">
+              <div className="relative">
+                <span className="absolute inset-y-0 left-4 flex items-center text-sm font-bold text-slate-400">
+                  R$
+                </span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  name="originalPrice"
+                  placeholder="0.00"
+                  className={`${inputCls} pl-12`}
+                />
+              </div>
             </Field>
           </div>
+
+          <Field label="Categoria">
+            <select required name="category" className={inputCls} defaultValue="">
+              <option value="" disabled>
+                Selecione...
+              </option>
+              {CATEGORIES.map((c) => (
+                <option key={c.name} value={c.name}>
+                  {c.emoji} {c.name}
+                </option>
+              ))}
+            </select>
+          </Field>
 
           <button
             type="submit"

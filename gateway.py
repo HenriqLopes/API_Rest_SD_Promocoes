@@ -7,18 +7,14 @@ import prot
 import rbt
 
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app) # Permite requisições de outras portas/domínios
 
 #estrutura que armazena as promos ja validas
-<<<<<<< HEAD
-dict_promo = {{
-
-	}}
-=======
 # dicionario de dicionarios
 dict_promo = {}
->>>>>>> f7890056d7cf3a5d0c365b4a0674334836fd3486
 
 #para Rest, dicionario de dicionarios facilmente convertido em JSON 
 itens = {}
@@ -66,19 +62,11 @@ def envia_voto(ch, dados):
 	rbt.envia_msg(ch, dados, defs.R_KEY_RANKING, defs.EXCH)
 	return
 
-<<<<<<< HEAD
-'''
-=======
-
 #TODO pai isso aqui ta adicionando qualquer coisa  que um usuario mandar como promoção, ou seja, paia, já que o MS_PROMO que tinha q validar né 
 
->>>>>>> f7890056d7cf3a5d0c365b4a0674334836fd3486
-#Cria promoção e aumenta contador
-@app.route("/promocoes", methods=["POST"])
 def criar_promocao():
 	new_item = request.get_json() #isso ja converte um JSON pra dict
 
-	#aqui entra a validação da Promo. (QUEM VALIDA? o GATE, ou o PROMO, pq agora a gente quer saber se foi a loja que assinou sabe)
 	pacote = prot.inic_pacote() #esse protocolo vai ser substituido por um JSON.
 
 	prot.escreve_sha(pacote, rbt.gera_assinatura_msg(prot.chars_para_str(pacote)))
@@ -99,6 +87,10 @@ def criar_promocao():
 
 	return jsonify(new_item), 201 #isso converte um dict pra um JSON
 
+#Rota para criar uma promoção nova
+@app.route("/criar-promocao", methods=["POST"])
+def handle_criar_promocao():
+    return criar_promocao()
 
 #Busca todas as promoções, sem categoria
 @app.route("/promocoes", methods=["GET"])
@@ -107,7 +99,7 @@ def lista_promocoes():
 	return jsonify(itens), 200 #supondo que o email ta como ref de cada promo isso aqui é bem insguro né (ai coitado ele é todo inseguro KSKSKSK perdão).
 
 #Busca as promoções por categoria
-@app.route('promocoes/<int:item_id>', methods=["GET"])
+@app.route('/promocoes/<int:item_id>', methods=["GET"])
 def lista_promocao_id(item_id):
 	global itens
 	
@@ -133,80 +125,7 @@ def atualiza_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 		if voto:
 			#essa parada aqui tem que ser feita pelo rank tbm n? (RANK TEM QUE CONFIRMAR PRO GATE ATUALIZAR) tudo tem que ter copia atualizada no GATE
 
-<<<<<<< HEAD
-        else:
-            item[chave] = valor
-        
-    return jsonify({
-        "mensagem": "Promoção alterada com sucesso",
-        "retorno": item,
-        }),200  
-'''
-
-'''
-#Permite apagar uma promoção (Se pá nem vamos usar)
-@app.route('/promocoes/<int:item_id>', methods=["DELETE"])
-def apaga_promocao(item_id):
-	item = items.get(item_id)
-
-    if item:
-        del item[item_id]
-        return jsonify({"message": "Item deleted"}), 200
-    else:
-        return jsonify({"error": "Item not found"}), 404
-'''
-
-def main():
-	global dict_promo
-	id = 0
-	connection, ch = inic_conec(defs.EXCH)
-	print("[] conexão iniciada")
-	inic_fila(ch, defs.FILA_GATEWAY, defs.EXCH)
-	print("[] fila iniciada")
-	bind_fila(ch, defs.FILA_GATEWAY, defs.EXCH, defs.R_KEY_VALIDAS)
-	escolha_cliente = interface_cliente()
-	#loop principal
-	while (escolha_cliente != 4):
-		# escolha add promo	
-		if (escolha_cliente == 1):
-
-			pacote = prot.inic_pacote()
-
-			nome_promo = str(input("Nome da promoção: "))
-			prot.escreve_nome(pacote, nome_promo)
-			print(f"[] nome adicionado: {prot.le_nome(pacote)}")
-
-			n_rk = int(input("Quantidade de tags: "))
-			prot.escreve_n_rk(pacote, n_rk)
-			for i in range(n_rk): 
-				print(f"Quais tags a promoção tem? \n [1] Comida \n [2] Livro \n [3] Roupa \n [4] Esporte \n [5] Doméstico")
-				tag = int(input("> "))
-				prot.escreve_rk_num_n(pacote, tag, i + 1)
-			print(f"[] {prot.le_n_rk(pacote)} rk adicionada(s): {prot.le_rk_num_n(pacote,1)}, {prot.le_rk_num_n(pacote,2)},{prot.le_rk_num_n(pacote,3)},{prot.le_rk_num_n(pacote,4)}")
-
-			prot.escreve_id(pacote, id)
-			id += 1
-			print(f"[] id adicionado: {prot.le_id(pacote)}")
-
-			prot.escreve_sha(pacote, gera_assinatura_msg(prot.chars_para_str(pacote)))
-			print(f"[] SHA adicionada: {prot.le_sha(pacote)}")
-
-			print("[] pacote completo")
-			#prot.print_pacote(pacote)
-			
-			#envia o pacote montado
-			print("[] enviando para promo")
-			envia_promo(ch, prot.pacote_para_string(pacote))
-
-			#espera o resposta do pacote
-			print("[] iniciando consumo")
-			consumir(ch, defs.FILA_GATEWAY)
-
-		# escolha votar promo
-		elif (escolha_cliente == 2):
-=======
->>>>>>> f7890056d7cf3a5d0c365b4a0674334836fd3486
-			id = int(input("ID: "))
+			id = int(input("ID: ")) #Isso aqui vai dar ruim, porque vai pedir pelo terminal, não pelo site
 
 			pacote = dict_promo[id]
 			prot.escreve_voto(pacote, 's')
@@ -225,7 +144,17 @@ def main():
 	
 	return jsonify({"error": "item not found"}), 404
 
-#Permite apagar uma promoção (Se pá nem vamos usar)
+#Rota para definir interesse em categoria
+@app.route("/interesse", methods=["POST"])
+def registrar_interesse():
+    return null
+
+#Apaga interesse em uma categoria
+@app.route("/interesse", methods=["DELETE"])
+def cancelar_interesse():
+	return null
+
+'''#Permite apagar uma promoção (Se pá nem vamos usar)
 @app.route('/promocoes/<int:item_id>', methods=["DELETE"])
 def apaga_promocao(item_id):
 
@@ -234,10 +163,10 @@ def apaga_promocao(item_id):
 	item = itens.get(item_id)
 
 	if item:
-		del item[item_id] #isso funciona em pyto?
+		del itens[item_id] #isso funciona em pyto?
 		return jsonify({"message": "Item deleted"}), 200
 	else:
-		return jsonify({"error": "Item not found"}), 404
+		return jsonify({"error": "Item not found"}), 404'''
 
 def main():
 	global dict_promo

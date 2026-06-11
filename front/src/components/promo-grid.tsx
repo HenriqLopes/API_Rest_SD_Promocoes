@@ -3,17 +3,47 @@ import { useVotes } from "@/hooks/use-votes";
 import { useInterests } from "@/hooks/use-interests";
 import { PromoCard } from "./promo-card";
 
+type Props = {
+  promotions: Promotion[];
+  emptyMessage?: string;
+  highlightInterests?: boolean;
+  loading?: boolean;
+  isMock?: boolean;
+};
+
+function PromoCardSkeleton() {
+  return (
+    <div className="flex flex-col rounded-3xl border border-slate-200 bg-card p-4 animate-pulse">
+      <div className="mb-4 aspect-square w-full rounded-2xl bg-slate-100" />
+      <div className="space-y-2">
+        <div className="h-3 w-1/2 rounded bg-slate-100" />
+        <div className="h-4 w-full rounded bg-slate-100" />
+        <div className="h-4 w-3/4 rounded bg-slate-100" />
+        <div className="mt-4 h-6 w-1/3 rounded bg-slate-100" />
+      </div>
+    </div>
+  );
+}
+
 export function PromoGrid({
   promotions,
   emptyMessage,
   highlightInterests = false,
-}: {
-  promotions: Promotion[];
-  emptyMessage?: string;
-  highlightInterests?: boolean;
-}) {
+  loading = false,
+  isMock = false,
+}: Props) {
   const { votes, toggle, adjusted } = useVotes();
   const { has } = useInterests();
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <PromoCardSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
 
   if (promotions.length === 0) {
     return (
@@ -26,17 +56,25 @@ export function PromoGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      {promotions.map((p) => (
-        <PromoCard
-          key={p.id}
-          promo={p}
-          count={adjusted(p.id, p.votes)}
-          liked={votes[p.id] === 1}
-          onToggle={() => toggle(p.id)}
-          highlighted={highlightInterests && has(p.category)}
-        />
-      ))}
+    <div className="space-y-4">
+      {isMock && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-700">
+          ⚠ Gateway indisponível — exibindo dados de exemplo. Inicie o{" "}
+          <code className="rounded bg-amber-100 px-1">gateway.py</code> para ver promoções reais.
+        </div>
+      )}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {promotions.map((p) => (
+          <PromoCard
+            key={p.id}
+            promo={p}
+            count={adjusted(p.id, p.votes)}
+            liked={votes[p.id] === 1}
+            onToggle={() => toggle(p.id)}
+            highlighted={highlightInterests && has(p.category)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

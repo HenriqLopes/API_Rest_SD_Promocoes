@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/page-shell";
 import { PromoGrid } from "@/components/promo-grid";
-import { PROMOTIONS } from "@/lib/mock-data";
 import { useInterests } from "@/hooks/use-interests";
+import { usePromocoes } from "@/hooks/use-promocoes";
 
 export const Route = createFileRoute("/minhas-categorias")({
   head: () => ({
@@ -19,7 +19,9 @@ export const Route = createFileRoute("/minhas-categorias")({
 
 function MinhasCategorias() {
   const { interests } = useInterests();
-  const filtered = PROMOTIONS.filter((p) => interests.includes(p.category));
+  const { promotions, loading, isMock } = usePromocoes();
+
+  const filtered = promotions.filter((p) => interests.includes(p.category));
 
   return (
     <PageShell>
@@ -50,6 +52,8 @@ function MinhasCategorias() {
         <PromoGrid
           promotions={filtered}
           emptyMessage="Sem promoções ativas nas suas categorias agora."
+          loading={loading}
+          isMock={isMock}
         />
       )}
     </PageShell>
