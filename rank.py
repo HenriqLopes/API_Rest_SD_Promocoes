@@ -35,7 +35,13 @@ def callback(ch, method, properties, pacote):
 
 		if id in dict_promo:
 			pac, n = dict_promo[id]
-			n += 1
+			
+			voto = prot.le_voto(pacote)
+			if voto == 's':
+				n += 1
+			elif voto == 'n':
+				n -= 1
+		
 			print(f"[] promo de id {id} com {n} votos")
 			if n > VOTES_HOT_DEAL:
 				prot.escreve_sha(pacote,(rbt.gera_assinatura_msg(prot.chars_para_str(pacote)))) 
