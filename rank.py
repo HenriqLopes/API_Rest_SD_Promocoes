@@ -41,13 +41,16 @@ def callback(ch, method, properties, pacote):
 				n += 1
 			elif voto == 'n':
 				n -= 1
-		
+			
 			print(f"[] promo de id {id} com {n} votos")
 			if n > VOTES_HOT_DEAL:
-				prot.escreve_sha(pacote,(rbt.gera_assinatura_msg(prot.chars_para_str(pacote)))) 
+				prot.escreve_sha(pacote,(rbt.gera_assinatura_msg(prot.chars_para_str(pacote))))
+
 				print(f"[] enviando para tag: {defs.R_KEYS[defs.PROM_QUENTES]}")
-				#aqui que arruma o bagui do notifica
+				
+				#manter isso aqui, mas agora o notifica se interessa por promos quentes.
 				rbt.envia_msg(ch, prot.pacote_para_string(pacote), defs.R_KEYS[defs.PROM_QUENTES], defs.EXCH)
+
 			dict_promo[id] = (pac, n)
 		else:
 			dict_promo[id] = (pacote, 1)

@@ -7,7 +7,6 @@ import rbt
 
 #bibliotecas necessárias para envio do e-mail
 import os
-from dotenv import load_dotenv
 import resend 
 
 CHAVE_PRIVADA = "chaves_privadas/priv_noti.der"
@@ -29,8 +28,12 @@ def callback(ch, method, properties, pacote):
 	print("[] validando assinatura")
 	if rbt.valida_assinatura(pacote, SHA,defs.PROM):
 		print("[] assinatura valida")
-		envia_email(pacote)
-
+		
+		# TODO colocar pra ler o pacote e enviar n email
+		prot.le_email(pacote)
+		prot.le_nome(pacote)
+		prot.le_id(pacote)
+		
 		#n_keys = prot.le_n_rk(pacote)
 		#print(f"[] publicando em {n_keys} tags")
 		#envia para todas as chaves da promo
@@ -46,26 +49,11 @@ def main():
 	print("[] conexão iniciada")
 	rbt.inic_fila(ch, defs.FILA_NOTIFICA, defs.EXCH)
 	print("[] fila iniciada")
-	rbt.bind_fila(ch, defs.FILA_NOTIFICA, defs.EXCH, defs.R_KEY_VALIDAS)
+	#rbt.bind_fila(ch, defs.FILA_NOTIFICA, defs.EXCH, defs.R_KEY_VALIDAS) # n precisa mais se importar com as promos
+	rbt.bind_fila(ch, defs.FILA_NOTIFICA, defs.EXCH, defs.R_KEYS[defs.PROM_QUENTES])
 	print("[] iniciando consumo")
 	consumir(ch, defs.FILA_NOTIFICA)
 	connection.close()
-
-# Envia e-mail avisando que a promoção é uma hotdeal
-def envia_email(pacote):
-	#Pega a API do resend do .env
-	id_promo = prot.le_id(pacote)
-	email_loja = prot.le_email(pacote)
-	nome_promo = prot.le_nome(pacote)
-	
-	resend.api_key = os.getenv("API_RESEND")
-
-	r = resend.Emails.send({
-		"from": "onboarding@resend.dev",
-		"to": "henriquelopesdebarros12345@gmail.com",
-		"subject": "${id_promo}: ${nome_promo} ",
-		"html": "<p>Parabéns, sua promooção <strong>ID: ${id_promo} ${nome_promo}</strong> virou um <strong>HOT-DEAL</strong>!</p>"
-	})
 
 if __name__ == '__main__':
 	main()

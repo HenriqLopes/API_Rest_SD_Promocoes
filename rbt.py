@@ -22,6 +22,21 @@ def valida_assinatura(msg, assinatura, quem):
 		return True
 	except (ValueError, TypeError):
 		return False
+	
+# faz o hash e RSA e ve se bate com assinatura, se der ret True se não False
+def valida_assinatura_loja(msg, assinatura, chave_publica):
+
+	key = RSA.import_key(open(chave_publica, 'rb').read())
+	msg_bytes = "".join(msg).encode()
+	h = SHA256.new(msg_bytes)
+
+	try:
+		assinatura_bytes = base64.b64decode(assinatura)
+		pkcs1_15.new(key).verify(h, assinatura_bytes)
+		return True
+	except (ValueError, TypeError):
+		return False
+	
 # gera um SHA da msg encodada.
 def gera_assinatura_msg(msg, chave_priv):
 	key = RSA.import_key(open(chave_priv, 'rb').read())

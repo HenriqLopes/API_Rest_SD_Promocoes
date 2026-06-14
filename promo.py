@@ -24,6 +24,8 @@ def callback(ch, method, properties, pacote):
 
 	print("[] validando assinatura")
 	#valida se a sha ta correta, se tiver add a promo na lista
+
+	# TODO tem que validar a assinatura da LOJA PAPAI
 	if rbt.valida_assinatura(pacote, SHA,defs.GATE):
 		print("[] assinatura valida")
 		prot.escreve_sha(pacote,rbt.gera_assinatura_msg(prot.pacote_para_string(pacote))) 

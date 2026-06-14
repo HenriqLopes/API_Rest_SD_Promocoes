@@ -7,14 +7,14 @@ import prot
 import rbt
 
 from flask import Flask, jsonify, request
-from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app) # Permite requisições de outras portas/domínios
 
 #estrutura que armazena as promos ja validas
 # dicionario de dicionarios
 dict_promo = {}
+
+ch = None
 
 #para Rest, dicionario de dicionarios facilmente convertido em JSON 
 itens = {}
@@ -42,6 +42,10 @@ def callback(ch, method, properties, body):
 		print("[] assinatura valida")
 		id = prot.le_id(pacote)
 		dict_promo[id] = pacote
+
+		#CALMAAAAAA
+		itens[id] = prot.pacote_p_dicio(pacote) #adicionando o JSON.
+
 		#prot.print_pacote(dict_promo[id])
 	else:
 		print("[] assinatura invalida")
@@ -63,7 +67,10 @@ def envia_voto(ch, dados):
 	return
 
 
-def criar_promocao(new_item):
+#Cria promoção e aumenta contador
+@app.route("/promocoes", methods=["POST"])
+def criar_promocao():
+	new_item = request.get_json() #isso ja converte um JSON pra dict
 
 	global itens 
 	new_id = (len(itens) + 1) #novo id sequencial
@@ -91,12 +98,6 @@ def criar_promocao(new_item):
 
 	return jsonify(new_item), 201 #isso converte um dict pra um JSON
 
-#Rota para criar uma promoção nova
-@app.route("/criar-promocao", methods=["POST"])
-def handle_criar_promocao():
-
-	new_item = request.get_json() #isso ja converte um JSON pra dict
-	return criar_promocao(new_item)
 
 #Busca todas as promoções, sem categoria
 @app.route("/promocoes", methods=["GET"])
@@ -153,16 +154,6 @@ def atualiza_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 	
 	return jsonify({"error": "item not found"}), 404
 
-#Rota para definir interesse em categoria
-@app.route("/interesse", methods=["POST"])
-def registrar_interesse():
-	return null
-
-#Apaga interesse em uma categoria
-@app.route("/interesse", methods=["DELETE"])
-def cancelar_interesse():
-	return null
-
 #Permite apagar uma promoção (Se pá nem vamos usar)
 @app.route('/promocoes/<int:item_id>', methods=["DELETE"])
 def apaga_promocao(item_id):
@@ -182,6 +173,7 @@ def main():
 	global itens
 
 	id = 0
+	global ch
 	connection, ch = rbt.inic_conec(defs.EXCH)
 	print("[] conexão iniciada")
 	rbt.inic_fila(ch, defs.FILA_GATEWAY, defs.EXCH)
@@ -195,4 +187,4 @@ def main():
 	connection.close()
 
 if __name__ == '__main__':
-	app.run(debug=True)
+	main()
