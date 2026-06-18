@@ -29,7 +29,7 @@ def callback(ch, method, properties, pacote):
 
 	print("[] validando assinatura")
 	#valida se a sha ta correta, se tiver add a promo na lista
-	if rbt.valida_assinatura(pacote, SHA, defs.GATE):
+	if rbt.valida_assinatura(pacote, SHA, defs.CHAVE_PUBLICA[defs.GATE]):
 		print("[] assinatura valida")
 		id = prot.le_id(pacote)
 
@@ -41,16 +41,18 @@ def callback(ch, method, properties, pacote):
 				n += 1
 			elif voto == 'n':
 				n -= 1
-			
+
+			prot.escreve_n_votos(pacote, n)
+		
 			print(f"[] promo de id {id} com {n} votos")
+			
+			prot.escreve_sha(pacote,(rbt.gera_assinatura_msg(prot.chars_para_str(pacote)))) 
+			
+			rbt.envia_msg(ch, prot.pacote_para_string(pacote), defs.R_KEY_VALIDAS, defs.EXCH) #manda pra atualizar contador de votos
+
 			if n > VOTES_HOT_DEAL:
-				prot.escreve_sha(pacote,(rbt.gera_assinatura_msg(prot.chars_para_str(pacote))))
-
-				print(f"[] enviando para tag: {defs.R_KEYS[defs.PROM_QUENTES]}")
-				
-				#manter isso aqui, mas agora o notifica se interessa por promos quentes.
-				rbt.envia_msg(ch, prot.pacote_para_string(pacote), defs.R_KEYS[defs.PROM_QUENTES], defs.EXCH)
-
+				rbt.envia_msg(ch, prot.pacote_para_string(pacote), defs.R_KEYS[defs.PROM_QUENTES], defs.EXCH) #manda pra mandar email e definir como hot
+			
 			dict_promo[id] = (pac, n)
 		else:
 			dict_promo[id] = (pacote, 1)

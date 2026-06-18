@@ -1,12 +1,20 @@
+import struct
+
 INI_BYT_SHA = 0
 TAM_BYT_SHA = 344
 INI_BYT_NOM = INI_BYT_SHA + TAM_BYT_SHA
 TAM_BYT_NOM = 23
 INI_BYT_IDS = INI_BYT_NOM + TAM_BYT_NOM
 TAM_BYT_IDS = 4
-INI_BYT_VOT = INI_BYT_IDS + TAM_BYT_IDS
+INI_BYT_NVT = INI_BYT_IDS + TAM_BYT_IDS
+TAM_BYT_NVT = 4
+INI_BYT_VOT = INI_BYT_NVT + TAM_BYT_NVT
 TAM_BYT_VOT = 1
-INI_BYT_NRK = INI_BYT_VOT + TAM_BYT_VOT
+INI_BYT_EML = INI_BYT_VOT + TAM_BYT_VOT
+TAM_BYT_EML = 29 #29 caracteres todo email 
+INI_BYT_PRE = INI_BYT_EML + TAM_BYT_EML
+TAM_BYT_PRE = 8 #1 double
+INI_BYT_NRK = INI_BYT_PRE + TAM_BYT_PRE
 TAM_BYT_NRK = 4
 INI_BYT_RKN = INI_BYT_NRK + TAM_BYT_NRK
 TAM_BYT_RKN = 4
@@ -16,7 +24,10 @@ def inic_pacote():
 		("0" * TAM_BYT_SHA) +
 		("a" * TAM_BYT_NOM) +
 		("0" * TAM_BYT_IDS) +
-		("n") +
+		("0" * TAM_BYT_NVT) +
+		("z") +
+		("a" * TAM_BYT_EML) +
+		("0" * TAM_BYT_PRE) +
 		("0" * TAM_BYT_NRK) +
 		("0" * TAM_BYT_RKN) +
 		("0" * TAM_BYT_RKN) +
@@ -50,6 +61,12 @@ def escreve_nome(msg, nome):
 def le_nome(msg):
 	return chars_para_str(msg[INI_BYT_NOM : (INI_BYT_NOM + TAM_BYT_NOM)])
 
+def escreve_email(msg, email):
+	msg[INI_BYT_EML : (INI_BYT_EML + TAM_BYT_EML)] = str_para_chars(email, TAM_BYT_EML)
+def le_email(msg):
+	return chars_para_str(msg[INI_BYT_EML : (INI_BYT_EML + TAM_BYT_EML)])
+
+
 def escreve_id(msg, id):
 	msg[INI_BYT_IDS : (INI_BYT_IDS + TAM_BYT_IDS)] = int_para_chars(id, TAM_BYT_IDS)
 def le_id(msg):
@@ -74,3 +91,62 @@ def print_pacote(msg):
 	print(f"{le_id(msg)}: {le_nome(msg)} {le_voto(msg)}")
 	print(le_sha(msg))
 	print(f"{le_n_rk(msg)}: {le_rk_num_n(msg, 1)}, {le_rk_num_n(msg, 2)}, {le_rk_num_n(msg, 3)}, {le_rk_num_n(msg, 4)}")
+
+def escreve_preco(msg, preco):
+	msg[INI_BYT_PRE : INI_BYT_PRE + TAM_BYT_PRE] = list(struct.pack('d', float(preco)))
+
+def le_preco(msg):
+	return struct.unpack('d', bytes(msg[INI_BYT_PRE : INI_BYT_PRE + TAM_BYT_PRE]))[0]
+
+def escreve_n_votos(msg, n_votos):
+	msg[INI_BYT_NVT : (INI_BYT_NVT + TAM_BYT_NVT)] = int_para_chars(id, TAM_BYT_NVT)
+def le_n_votos(msg):
+	return chars_para_int(msg[INI_BYT_NVT : (INI_BYT_NVT + TAM_BYT_NVT)])
+
+
+def dicio_p_pacote(dicio):
+	
+	pacote = inic_pacote()
+
+	nome = dicio.get('nome')
+	if nome is not None:
+		escreve_nome(pacote, nome)
+
+	# ...
+
+	preco = dicio.get('preco')
+	if preco is not None:
+		escreve_preco(pacote, preco)
+
+	email = dicio.get('email')
+	if email is not None:
+		escreve_email(pacote, email)
+
+
+	id = dicio.get('id')
+	if id is not None:
+		escreve_id(pacote, id)
+
+	return pacote
+def pacote_p_dicio(pacote):
+
+	dicio = {}
+
+	nome =  le_nome(pacote)
+	if nome != ("a" * TAM_BYT_NOM): #nome padrão
+		dicio['nome'] = nome
+
+	# ...
+	
+	
+
+	email =  le_email(pacote)
+	if email != ("a" * TAM_BYT_EML): #email padrão
+		dicio['email'] = email
+
+	id =  le_id(pacote)
+	if id != 0: #id padrão
+		dicio['id'] = id
+
+	return dicio
+

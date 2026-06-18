@@ -7,8 +7,10 @@ import prot
 import rbt
 
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app) # Permite requisições de outras portas/domínios
 
 #estrutura que armazena as promos ja validas
 # dicionario de dicionarios
@@ -28,6 +30,7 @@ def consumir(ch, fila): #Acho que não vai mais ser necessário, porque vai vira
 # função chamada sempre que um pacote é lido
 def callback(ch, method, properties, body):
 	global dict_promo
+	
 	print("[] pacote recebido")
 	pacote = list(chr(b) for b in body)
 	#prot.print_pacote(pacote)
@@ -38,23 +41,37 @@ def callback(ch, method, properties, body):
 	prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
 	#valida se a sha ta correta, se tiver add a promo na lista
 	print("[] validando assinatura")
-	if rbt.valida_assinatura(pacote, SHA,defs.PROM):
-		print("[] assinatura valida")
+	
+	#retorno do promo
+	if rbt.valida_assinatura(pacote, SHA,defs.CHAVE_PUBLICA[defs.PROM]):
+		print("[] assinatura valida promo")
+
 		id = prot.le_id(pacote)
-		dict_promo[id] = pacote
-
-		#CALMAAAAAA
-		itens[id] = prot.pacote_p_dicio(pacote) #adicionando o JSON.
-
+		dict_promo[id] = pacote # adicionando o id novo no pacote
 		#prot.print_pacote(dict_promo[id])
 	else:
-		print("[] assinatura invalida")
+		print("[] assinatura invalida promo")
+
+	#retorno do rank
+	if rbt.valida_assinatura(pacote, SHA, defs.CHAVE_PUBLICA[defs.RANK]):
+		print("[] assinatura valida rank")
+
+		id = prot.le_id(pacote)
+		n_votos = prot.le_n_votos(pacote)
+
+		promo = dict_promo[id]
+		promo['votos'] = n_votos
+
+		if (n_votos > 5): #HOT DEAL
+			promo['hot'] = True
+		elif (n_votos < 5): 
+			promo['hot'] = False
+
+	else:
+		print("[] assinatura invalida rank")
+
 	print("[] encerrando consumo")
 	ch.stop_consuming()
-
-# recebe escolha do cliente
-def interface_cliente():
-	return int(input(" [1] Adicionar nova promoção \n [2] Votar promoções \n [3] Listar promoções \n [4] Sair\n >"))
 
 # envia um pacote ja finalizado para PROMO
 def envia_promo(ch, dados):
@@ -66,25 +83,18 @@ def envia_voto(ch, dados):
 	rbt.envia_msg(ch, dados, defs.R_KEY_RANKING, defs.EXCH)
 	return
 
-
-#Cria promoção e aumenta contador
-@app.route("/promocoes", methods=["POST"])
-def criar_promocao():
-	new_item = request.get_json() #isso ja converte um JSON pra dict
+def criar_promocao(new_item):
 
 	global itens 
 	new_id = (len(itens) + 1) #novo id sequencial
 	new_item["id"] = new_id
 
 	#=========================================
-	pacote = prot.dicio_p_pacote(new_item) #coloca ID, Nome e Email no pacote.#TODO pai isso aqui ta adicionando qualquer coisa  que um usuario mandar como promoção, ou seja, paia, já que o MS_PROMO que tinha q validar né 
+	pacote = prot.dicio_p_pacote(new_item) # id, nome, preço e email
 
-	
-	# TODO se pa que isso aqui n é o GATE que assina, mas a loja tlg, vem no proprio json
-	# COMO CARALHOS A LOJA VAI ASSINAR? ISSO VAI AONDE? no javascript?
-	#prot.escreve_sha(pacote, rbt.gera_assinatura_msg(prot.chars_para_str(pacote)))
-
-	prot.escreve_sha(pacote, new_item["sha"])
+	sha_loja = new_item['sha']
+	prot.escreve_sha(pacote, sha_loja)
+	#prot.escreve_sha(pacote, new_item["sha"]) não assina do gate pq ta com a assinatura da loja
 
 	global ch
 	print("[] enviando para promo")
@@ -98,6 +108,12 @@ def criar_promocao():
 
 	return jsonify(new_item), 201 #isso converte um dict pra um JSON
 
+#Rota para criar uma promoção nova
+@app.route("/criar-promocao", methods=["POST"])
+def handle_criar_promocao():
+
+	new_item = request.get_json() #isso ja converte um JSON pra dict
+	return criar_promocao(new_item)
 
 #Busca todas as promoções, sem categoria
 @app.route("/promocoes", methods=["GET"])
@@ -142,17 +158,26 @@ def atualiza_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 			
 			prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
 			prot.escreve_sha(pacote, rbt.gera_assinatura_msg(prot.chars_para_str(pacote)))
-			print(f"[] SHA adicionada: {prot.le_sha(pacote)}")
+			#print(f"[] SHA adicionada: {prot.le_sha(pacote)}")
 			envia_voto(ch, prot.pacote_para_string(pacote))
 
-			id = updated_data['id']
-			itens[id]["voto"] += voto
-
-			#TODO aqui if hot deal hot deal, ou tem q receber do rank. se receber ai nossas hot deals vão ser duplicadas
-
+			#id = updated_data['id']
+			#itens[id]["voto"] += voto isso aqui vai ser feito no callback
+			consumir(ch, defs.FILA_GATEWAY)
+			
 		return jsonify(item),200 # retorna o item com os votos atualizados.
 	
 	return jsonify({"error": "item not found"}), 404
+
+#Rota para definir interesse em categoria
+@app.route("/interesse", methods=["POST"])
+def registrar_interesse():
+	return null
+
+#Apaga interesse em uma categoria
+@app.route("/interesse", methods=["DELETE"])
+def cancelar_interesse():
+	return null
 
 #Permite apagar uma promoção (Se pá nem vamos usar)
 @app.route('/promocoes/<int:item_id>', methods=["DELETE"])
@@ -179,7 +204,7 @@ def main():
 	rbt.inic_fila(ch, defs.FILA_GATEWAY, defs.EXCH)
 	print("[] fila iniciada")
 	rbt.bind_fila(ch, defs.FILA_GATEWAY, defs.EXCH, defs.R_KEY_VALIDAS)
-	escolha_cliente = interface_cliente()
+	rbt.bind_fila(ch, defs.FILA_GATEWAY, defs.EXCH, defs.R_KEYS[defs.PROM_QUENTES]) #hots do GATEWAY
 
 	#TODO tem que starta alguma coisa do rest aqui?
 	# some o loop principal pq vai ser tudo por chamada rest.
@@ -187,4 +212,4 @@ def main():
 	connection.close()
 
 if __name__ == '__main__':
-	main()
+	app.run(debug=True)
