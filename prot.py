@@ -3,7 +3,7 @@ import struct
 INI_BYT_SHA = 0
 TAM_BYT_SHA = 344
 INI_BYT_NOM = INI_BYT_SHA + TAM_BYT_SHA
-TAM_BYT_NOM = 23
+TAM_BYT_NOM = 100
 INI_BYT_IDS = INI_BYT_NOM + TAM_BYT_NOM
 TAM_BYT_IDS = 4
 INI_BYT_NVT = INI_BYT_IDS + TAM_BYT_IDS
@@ -88,7 +88,7 @@ def le_rk_num_n(msg, n):
 	return chars_para_int(msg[INI_BYT_RKN +  (TAM_BYT_RKN * (n - 1)) : (INI_BYT_RKN + (TAM_BYT_RKN * n))])
 
 def print_pacote(msg):
-	print(f"{le_id(msg)}: {le_nome(msg)} {le_voto(msg)}")
+	print(f"{le_id(msg)}: {le_nome(msg)}, {le_preco(msg)} com {le_n_votos(msg)} de {le_email(msg)}")
 	print(le_sha(msg))
 	print(f"{le_n_rk(msg)}: {le_rk_num_n(msg, 1)}, {le_rk_num_n(msg, 2)}, {le_rk_num_n(msg, 3)}, {le_rk_num_n(msg, 4)}")
 

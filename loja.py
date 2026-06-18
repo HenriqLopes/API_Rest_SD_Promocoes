@@ -25,11 +25,11 @@ while True:
 
 	promo = {
 		"nome": nome,
-		"email": email,
-		"preco": preco
+		"email": email
+		#"preco": preco
 	}
 
-	sha = rbt.gera_assinatura_msg(promo, chave)
+	sha = rbt.gera_assinatura_msg(str(promo),chave)
 
 	promo['sha'] = sha
 
@@ -39,4 +39,4 @@ while True:
 	)
 
 	print(resp.status_code)
-	print(resp.json())
+	print("Passou o loja")

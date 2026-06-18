@@ -23,13 +23,14 @@ const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http:/
 
 /** Payload enviado ao criar uma promoção */
 export type CreatePromoPayload = {
-  title: string;
+  nome: string;
   store: string;
   email: string;
   url: string;
-  price: number;
-  originalPrice?: number;
+  preco: number;
+  originalpreco?: number;
   category: string;
+  sha: string;
 };
 
 /** Resposta genérica de erro do gateway */
@@ -60,8 +61,8 @@ function normalizePromotion(raw: Record<string, unknown>): Promotion {
     ...(raw as Promotion),
     id: String(raw.id),
     votes: Number(raw.votes ?? 0),
-    price: Number(raw.price ?? 0),
-    originalPrice: raw.originalPrice != null ? Number(raw.originalPrice) : undefined,
+    preco: Number(raw.preco ?? 0),
+    originalpreco: raw.originalpreco != null ? Number(raw.originalpreco) : undefined,
   };
 }
 

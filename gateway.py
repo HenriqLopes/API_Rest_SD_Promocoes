@@ -101,8 +101,6 @@ def criar_promocao(new_item):
 	prot.print_pacote(pacote)
 	envia_promo(ch, prot.pacote_para_string(pacote))
 	print("Passei aqui 1*******")
-	consumir(ch, defs.FILA_GATEWAY)
-	print("Passei aqui 2**********")
 	#=========================================
 	
 	#itens[new_id] = new_item #ja dicionario isso vai acontecer no callback agora?
