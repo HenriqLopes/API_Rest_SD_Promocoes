@@ -98,10 +98,11 @@ def criar_promocao(new_item):
 
 	global ch
 	print("[] enviando para promo")
+	prot.print_pacote(pacote)
 	envia_promo(ch, prot.pacote_para_string(pacote))
-	#espera o resposta do pacote
-	print("[] iniciando consumo")
-	consumir(ch, defs.FILA_GATEWAY) #bloqueia -> vai para callback
+	print("Passei aqui 1*******")
+	consumir(ch, defs.FILA_GATEWAY)
+	print("Passei aqui 2**********")
 	#=========================================
 	
 	#itens[new_id] = new_item #ja dicionario isso vai acontecer no callback agora?
@@ -122,7 +123,7 @@ def lista_promocoes():
 	return jsonify(itens), 200 #supondo que o email ta como ref de cada promo isso aqui é bem insguro né (ai coitado ele é todo inseguro KSKSKSK perdão).
 
 #Busca as promoções por categoria
-@app.route('promocoes/<int:item_id>', methods=["GET"])
+@app.route('/promocoes/<int:item_id>', methods=["GET"])
 def lista_promocao_id(item_id):
 	global itens
 	
@@ -133,7 +134,7 @@ def lista_promocao_id(item_id):
     
 	return jsonify({"error": "Item not found"}), 404
 
-#Atualiza os campos individuais das promoções
+#Atualiza os campos individugit
 @app.route('/items/<int:item_id>', methods=['PATCH'])
 def atualiza_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 
@@ -163,7 +164,6 @@ def atualiza_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 
 			#id = updated_data['id']
 			#itens[id]["voto"] += voto isso aqui vai ser feito no callback
-			consumir(ch, defs.FILA_GATEWAY)
 			
 		return jsonify(item),200 # retorna o item com os votos atualizados.
 	
@@ -206,10 +206,11 @@ def main():
 	rbt.bind_fila(ch, defs.FILA_GATEWAY, defs.EXCH, defs.R_KEY_VALIDAS)
 	rbt.bind_fila(ch, defs.FILA_GATEWAY, defs.EXCH, defs.R_KEYS[defs.PROM_QUENTES]) #hots do GATEWAY
 
-	#TODO tem que starta alguma coisa do rest aqui?
-	# some o loop principal pq vai ser tudo por chamada rest.
+	app.run(debug=True)
 
-	connection.close()
+	#connection.close()
+	consumir(ch, defs.FILA_GATEWAY)
+
 
 if __name__ == '__main__':
-	app.run(debug=True)
+	main()
