@@ -1,12 +1,10 @@
 import type { Promotion } from "@/lib/mock-data";
 import { useVotes } from "@/hooks/use-votes";
-import { useInterests } from "@/hooks/use-interests";
 import { PromoCard } from "./promo-card";
 
 type Props = {
   promotions: Promotion[];
   emptyMessage?: string;
-  highlightInterests?: boolean;
   loading?: boolean;
   isMock?: boolean;
 };
@@ -28,12 +26,10 @@ function PromoCardSkeleton() {
 export function PromoGrid({
   promotions,
   emptyMessage,
-  highlightInterests = false,
   loading = false,
   isMock = false,
 }: Props) {
   const { votes, toggle, adjusted } = useVotes();
-  const { has } = useInterests();
 
   if (loading) {
     return (
@@ -71,7 +67,6 @@ export function PromoGrid({
             count={adjusted(p.id, p.votes)}
             liked={votes[p.id] === 1}
             onToggle={() => toggle(p.id)}
-            highlighted={highlightInterests && has(p.category)}
           />
         ))}
       </div>

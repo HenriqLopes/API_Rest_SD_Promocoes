@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { Check } from "lucide-react";
-import { CATEGORIES } from "@/lib/mock-data";
+import { CATEGORIES, type Category } from "@/lib/mock-data";
 import { useInterests } from "@/hooks/use-interests";
 import { cn } from "@/lib/utils";
 
 export function CategoryPicker() {
-  const { has, toggle, interests } = useInterests();
+  const { has, toggle, interests, email, setEmail } = useInterests();
+  const [emailInput, setEmailInput] = useState(email);
 
   return (
     <section className="mb-8 rounded-3xl border border-slate-200 bg-card p-5">
@@ -16,14 +18,32 @@ export function CategoryPicker() {
           {interests.length} selecionada{interests.length === 1 ? "" : "s"}
         </p>
       </div>
+
+      <div className="mb-4 flex gap-2">
+        <input
+          type="email"
+          placeholder="Seu e-mail para notificações"
+          value={emailInput}
+          onChange={(e) => setEmailInput(e.target.value)}
+          onBlur={() => setEmail(emailInput)}
+          className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm outline-none focus:border-brand-orange"
+        />
+      </div>
+
+      {!email && (
+        <p className="mb-3 text-xs text-muted-foreground">
+          Informe seu e-mail para receber notificações de hot deals.
+        </p>
+      )}
+
       <div className="flex flex-wrap gap-2">
         {CATEGORIES.map((c) => {
-          const active = has(c.name);
+          const active = has(c.name as Category);
           return (
             <button
               key={c.name}
               type="button"
-              onClick={() => toggle(c.name)}
+              onClick={() => toggle(c.name as Category)}
               className={cn(
                 "flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all",
                 active

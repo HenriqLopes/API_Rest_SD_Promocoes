@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { PageShell } from "@/components/page-shell";
-import { CATEGORIES } from "@/lib/mock-data";
 import { criarPromocao } from "@/lib/api/gateway";
 import { toast } from "sonner";
 
@@ -21,7 +20,7 @@ export const Route = createFileRoute("/cadastrar")({
 function CadastrarPage() {
   const [submitting, setSubmitting] = useState(false);
 
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitting(true);
 
@@ -29,15 +28,10 @@ function CadastrarPage() {
       const formData = new FormData(e.currentTarget);
 
       await criarPromocao({
-        url: formData.get("url") as string,
-        store: formData.get("store") as string,
+        nome: formData.get("nome") as string,
         email: formData.get("email") as string,
-        title: formData.get("title") as string,
-        price: parseFloat(formData.get("price") as string),
-        originalPrice: formData.get("originalPrice")
-          ? parseFloat(formData.get("originalPrice") as string)
-          : undefined,
-        category: formData.get("category") as string,
+        preco: parseFloat(formData.get("preco") as string),
+        sha: "",
       });
 
       toast.success("Promoção enviada para validação!", {
@@ -65,28 +59,18 @@ function CadastrarPage() {
           </p>
         </div>
         <form onSubmit={onSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <Field label="Link da Oferta">
-              <input
-                required
-                type="url"
-                name="url"
-                placeholder="https://loja.com/produto"
-                className={inputCls}
-              />
-            </Field>
-            <Field label="Loja">
-              <input
-                required
-                type="text"
-                name="store"
-                placeholder="Ex: Amazon"
-                className={inputCls}
-              />
-            </Field>
-          </div>
 
-          <Field label="E-mail da loja (para notificações)">
+          <Field label="Nome da Promoção">
+            <input
+              required
+              type="text"
+              name="nome"
+              placeholder="Ex: Smart TV Samsung 55 polegadas 4K"
+              className={inputCls}
+            />
+          </Field>
+
+          <Field label="E-mail da loja">
             <input
               required
               type="email"
@@ -96,60 +80,20 @@ function CadastrarPage() {
             />
           </Field>
 
-          <Field label="Título da Promoção">
-            <input
-              required
-              type="text"
-              name="title"
-              placeholder="Ex: Smart TV Samsung 55 polegadas 4K"
-              className={inputCls}
-            />
-          </Field>
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <Field label="Preço Atual">
-              <div className="relative">
-                <span className="absolute inset-y-0 left-4 flex items-center text-sm font-bold text-slate-400">
-                  R$
-                </span>
-                <input
-                  required
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  name="price"
-                  className={`${inputCls} pl-12`}
-                />
-              </div>
-            </Field>
-            <Field label="Preço Original (opcional)">
-              <div className="relative">
-                <span className="absolute inset-y-0 left-4 flex items-center text-sm font-bold text-slate-400">
-                  R$
-                </span>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  name="originalPrice"
-                  placeholder="0.00"
-                  className={`${inputCls} pl-12`}
-                />
-              </div>
-            </Field>
-          </div>
-
-          <Field label="Categoria">
-            <select required name="category" className={inputCls} defaultValue="">
-              <option value="" disabled>
-                Selecione...
-              </option>
-              {CATEGORIES.map((c) => (
-                <option key={c.name} value={c.name}>
-                  {c.emoji} {c.name}
-                </option>
-              ))}
-            </select>
+          <Field label="Preço">
+            <div className="relative">
+              <span className="absolute inset-y-0 left-4 flex items-center text-sm font-bold text-slate-400">
+                R$
+              </span>
+              <input
+                required
+                type="number"
+                step="0.01"
+                min="0"
+                name="preco"
+                className={`${inputCls} pl-12`}
+              />
+            </div>
           </Field>
 
           <button

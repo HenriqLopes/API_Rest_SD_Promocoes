@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell } from "@/components/page-shell";
 import { PromoGrid } from "@/components/promo-grid";
-import { isHotDeal } from "@/lib/mock-data";
-import { useVotes } from "@/hooks/use-votes";
 import { usePromocoes } from "@/hooks/use-promocoes";
 
 export const Route = createFileRoute("/hot-deals")({
@@ -20,9 +18,8 @@ export const Route = createFileRoute("/hot-deals")({
 
 function HotDeals() {
   const { promotions, loading, isMock } = usePromocoes();
-  const { adjusted } = useVotes();
 
-  const hot = promotions.filter((p) => isHotDeal(adjusted(p.id, p.votes)));
+  const hot = promotions.filter((p) => p.hot === true);
 
   return (
     <PageShell>
@@ -31,7 +28,7 @@ function HotDeals() {
           🔥 Hot Deals
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Promoções com mais de 100 votos positivos.
+          Promoções em destaque com votos suficientes da comunidade.
         </p>
       </header>
       <PromoGrid

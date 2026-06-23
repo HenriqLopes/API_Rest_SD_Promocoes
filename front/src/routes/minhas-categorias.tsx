@@ -21,8 +21,6 @@ function MinhasCategorias() {
   const { interests } = useInterests();
   const { promotions, loading, isMock } = usePromocoes();
 
-  const filtered = promotions.filter((p) => interests.includes(p.category));
-
   return (
     <PageShell>
       <header className="mb-8">
@@ -50,8 +48,8 @@ function MinhasCategorias() {
         </div>
       ) : (
         <PromoGrid
-          promotions={filtered}
-          emptyMessage="Sem promoções ativas nas suas categorias agora."
+          promotions={promotions}
+          emptyMessage="Sem promoções ativas no momento."
           loading={loading}
           isMock={isMock}
         />

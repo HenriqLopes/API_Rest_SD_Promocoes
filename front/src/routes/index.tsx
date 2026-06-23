@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { promotions, loading, error, isMock, refetch } = usePromocoes();
+  const { promotions, loading, isMock, refetch } = usePromocoes();
 
   return (
     <PageShell>
@@ -30,7 +30,7 @@ function Index() {
             Todas as promoções
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Vote nas ofertas que valem a pena. Promoções com {">"} 100 votos viram{" "}
+            Vote nas ofertas que valem a pena. Promoções com votos suficientes viram{" "}
             <span className="font-semibold text-brand-orange">Hot Deals</span>.
           </p>
         </div>
@@ -45,7 +45,6 @@ function Index() {
       </header>
       <PromoGrid
         promotions={promotions}
-        highlightInterests
         loading={loading}
         isMock={isMock}
       />

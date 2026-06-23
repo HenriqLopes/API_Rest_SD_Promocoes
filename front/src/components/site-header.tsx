@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Flame, Search } from "lucide-react";
+import { Flame } from "lucide-react";
 
 const navItems: { to: "/" | "/minhas-categorias" | "/hot-deals"; label: string; hot?: boolean }[] = [
   { to: "/", label: "Todas" },
@@ -45,14 +45,6 @@ export function SiteHeader() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
-          <div className="relative hidden lg:block">
-            <Search className="pointer-events-none absolute inset-y-0 left-3 my-auto h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar ofertas..."
-              className="w-64 rounded-xl border border-slate-200 bg-slate-50 py-2 pl-10 pr-4 text-sm focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange"
-            />
-          </div>
           <Link
             to="/cadastrar"
             className="rounded-xl bg-brand-orange px-5 py-2 text-sm font-bold text-white transition-transform active:scale-95"

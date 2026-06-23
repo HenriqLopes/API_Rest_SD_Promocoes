@@ -1,20 +1,3 @@
-/**
- * gateway.ts
- * Camada de integração com o gateway.py (Flask REST API).
- *
- * Contrato das rotas (gateway.py):
- *   GET    /promocoes           → { "1": {promo}, "2": {promo}, ... }
- *   GET    /promocoes/:id       → {promo} | { error }
- *   POST   /criar-promocao      → {promo criada} (201)
- *   PATCH  /items/:id           → body: { voto: 1 | -1 }  → {promo atualizada}
- *   DELETE /promocoes/:id       → { message } | { error }
- *
- * Para adicionar uma nova rota no back:
- *   1. Implemente a rota no gateway.py
- *   2. Adicione a função correspondente aqui seguindo o mesmo padrão
- *   3. O front já está pronto para consumir via hooks ou chamada direta
- */
-
 import type { Promotion } from "@/lib/mock-data";
 
 const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:5000";
@@ -24,13 +7,14 @@ const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http:/
 /** Payload enviado ao criar uma promoção */
 export type CreatePromoPayload = {
   nome: string;
-  store: string;
   email: string;
-  url: string;
   preco: number;
-  originalpreco?: number;
-  category: string;
   sha: string;
+};
+
+export type InterestPayload = {
+  email: string;
+  categoria: string; // nome da categoria, ex: "Livro"
 };
 
 /** Resposta genérica de erro do gateway */
@@ -55,14 +39,15 @@ async function handleResponse<T>(res: Response): Promise<T> {
 /**
  * O gateway armazena IDs como int (chave do dict Python).
  * Normaliza para string para consistência com o tipo Promotion do front.
+ * O campo 'hot' é setado diretamente pelo back e passado adiante.
  */
 function normalizePromotion(raw: Record<string, unknown>): Promotion {
   return {
     ...(raw as Promotion),
     id: String(raw.id),
-    votes: Number(raw.votes ?? 0),
     preco: Number(raw.preco ?? 0),
-    originalpreco: raw.originalpreco != null ? Number(raw.originalpreco) : undefined,
+    votes: Number(raw.votos ?? raw.votes ?? 0), // back usa 'votos'
+    hot: raw.hot === true,
   };
 }
 
@@ -77,16 +62,6 @@ export async function listarPromocoes(): Promise<Promotion[]> {
   const res = await fetch(`${BASE_URL}/promocoes`);
   const data = await handleResponse<Record<string, Record<string, unknown>>>(res);
   return Object.values(data).map(normalizePromotion);
-}
-
-/**
- * GET /promocoes/:id
- * Busca uma promoção específica pelo ID.
- */
-export async function buscarPromocao(id: string | number): Promise<Promotion> {
-  const res = await fetch(`${BASE_URL}/promocoes/${id}`);
-  const data = await handleResponse<Record<string, unknown>>(res);
-  return normalizePromotion(data);
 }
 
 /**
@@ -119,13 +94,20 @@ export async function votarPromocao(id: string | number, voto: 1 | -1 = 1): Prom
   return normalizePromotion(data);
 }
 
-/**
- * DELETE /promocoes/:id
- * Remove uma promoção pelo ID.
- */
-export async function apagarPromocao(id: string | number): Promise<{ message: string }> {
-  const res = await fetch(`${BASE_URL}/promocoes/${id}`, {
-    method: "DELETE",
+export async function registrarInteresse(payload: InterestPayload): Promise<void> {
+  const res = await fetch(`${BASE_URL}/interesse`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
   });
-  return handleResponse<{ message: string }>(res);
+  await handleResponse<unknown>(res);
+}
+
+export async function cancelarInteresse(payload: InterestPayload): Promise<void> {
+  const res = await fetch(`${BASE_URL}/interesse`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  await handleResponse<unknown>(res);
 }
