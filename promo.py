@@ -19,6 +19,7 @@ def callback(ch, method, properties, pacote):
 
 	nome = prot.le_nome(pacote)
 	preco = prot.le_preco(pacote)
+	print(preco)
 	email = prot.le_email(pacote)
 	chave = None
 	if (email == 'gustavobuenodacosta@gmail.com'):
@@ -36,9 +37,9 @@ def callback(ch, method, properties, pacote):
 
 	print(len(prot.le_sha(pacote)))
 
-	print("********************")
-	print(assinatura)
-	print("********************")
+	print(nome)
+	print(preco)
+	print(email)
 
 	if (rbt.valida_assinatura_loja(str(promo), assinatura, chave)):
 		print("[] assinatura valida")
@@ -46,7 +47,7 @@ def callback(ch, method, properties, pacote):
 		#limpa a sha do pacote
 		prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
 		
-		prot.escreve_sha(pacote,rbt.gera_assinatura_msg(prot.pacote_para_string(pacote))) 
+		prot.escreve_sha(pacote,rbt.gera_assinatura_msg(prot.pacote_para_string(pacote), CHAVE_PRIVADA)) 
 		print("[] postando promo como validada")
 		rbt.envia_msg(ch, prot.pacote_para_string(pacote),defs.R_KEY_VALIDAS,defs.EXCH)
 	else:

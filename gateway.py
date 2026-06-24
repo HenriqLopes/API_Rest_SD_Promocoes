@@ -10,6 +10,8 @@ from flask import Flask, jsonify, request, Response
 import json, time, queue
 from flask_cors import CORS
 
+import threading
+
 app = Flask(__name__)
 CORS(app) # Permite requisições de outras portas/domínios
 
@@ -33,7 +35,7 @@ def notificar_cliente(evento: dict):
 	for q in clientes_sse:
 		q.put_nowait(evento)
 
-@app.rote("/stream")
+@app.route("/stream")
 def stream():
 	def gerador():
 		q = queue.Queue(maxsize=50)
@@ -48,8 +50,18 @@ def stream():
 #********** SSE **********
 
 # bloqueia eternamente pra ficar só consumindo sua fila
-def consumir(ch, fila): #Acho que não vai mais ser necessário, porque vai virar a interface web
-	ch.basic_consume(queue=fila, auto_ack=True, on_message_callback=callback)
+def consumir(): #Acho que não vai mais ser necessário, porque vai virar a interface web
+
+	global ch	
+	connection, ch = rbt.inic_conec(defs.EXCH)
+	print("[] conexão iniciada")
+	rbt.inic_fila(ch, defs.FILA_GATEWAY, defs.EXCH)
+	print("[] fila iniciada")
+	rbt.bind_fila(ch, defs.FILA_GATEWAY, defs.EXCH, defs.R_KEY_VALIDAS)
+	rbt.bind_fila(ch, defs.FILA_GATEWAY, defs.EXCH, defs.R_KEYS[defs.PROM_QUENTES]) #hots do GATEWAY
+
+	ch.basic_consume(queue=defs.FILA_GATEWAY, auto_ack=True, on_message_callback=callback)
+	print("[] iniciando consumo")
 	ch.start_consuming()
 
 # função chamada sempre que um pacote é lido
@@ -68,7 +80,7 @@ def callback(ch, method, properties, body):
 	print("[] validando assinatura")
 	
 	#retorno do promo
-	if rbt.valida_assinatura(pacote, SHA,defs.CHAVE_PUBLICA[defs.PROM]):
+	if rbt.valida_assinatura(pacote, SHA,defs.PROM):
 		print("[] assinatura valida promo")
 
 		id = prot.le_id(pacote)
@@ -80,7 +92,7 @@ def callback(ch, method, properties, body):
 		print("[] assinatura invalida promo")
 
 	#retorno do rank
-	if rbt.valida_assinatura(pacote, SHA, defs.CHAVE_PUBLICA[defs.RANK]):
+	if rbt.valida_assinatura(pacote, SHA, defs.RANK):
 		print("[] assinatura valida rank")
 
 		id = prot.le_id(pacote)
@@ -100,13 +112,14 @@ def callback(ch, method, properties, body):
 	else:
 		print("[] assinatura invalida rank")
 
-	print("[] encerrando consumo")
-
-	ch.stop_consuming()
 
 # envia um pacote ja finalizado para PROMO
-def envia_promo(ch, dados):
+def envia_promo(dados):
+
+	connection, ch = rbt.inic_conec(defs.EXCH)
 	rbt.envia_msg(ch, dados, defs.R_KEY_PROMOCAO, defs.EXCH)
+	connection.close()
+
 	return
 
 # envia um pacote ja finalizado para RANK
@@ -125,13 +138,13 @@ def criar_promocao(new_item):
 
 	sha_loja = new_item['sha']
 	prot.escreve_sha(pacote, sha_loja)
+	prot.escreve_id(pacote, new_id)
 	#prot.escreve_sha(pacote, new_item["sha"]) não assina do gate pq ta com a assinatura da loja
 
-	global ch
 	print("[] enviando para promo")
 	prot.print_pacote(pacote)
-	envia_promo(ch, prot.pacote_para_string(pacote))
-	print("Passei aqui 1*******")
+
+	envia_promo(prot.pacote_para_string(pacote))
 	#=========================================
 	
 	#itens[new_id] = new_item #ja dicionario isso vai acontecer no callback agora?
@@ -254,27 +267,15 @@ def apaga_promocao(item_id):
 		return jsonify({"message": "Item deleted"}), 200
 	else:
 		return jsonify({"error": "Item not found"}), 404
-	
-
 
 def main():
 	global dict_promo
 	global itens
 
-	id = 0
-	global ch
-	connection, ch = rbt.inic_conec(defs.EXCH)
-	print("[] conexão iniciada")
-	rbt.inic_fila(ch, defs.FILA_GATEWAY, defs.EXCH)
-	print("[] fila iniciada")
-	rbt.bind_fila(ch, defs.FILA_GATEWAY, defs.EXCH, defs.R_KEY_VALIDAS)
-	rbt.bind_fila(ch, defs.FILA_GATEWAY, defs.EXCH, defs.R_KEYS[defs.PROM_QUENTES]) #hots do GATEWAY
+	t = threading.Thread(target=consumir, daemon=True)
+	t.start()
 
 	app.run(debug=True)
-
-	#connection.close()
-	consumir(ch, defs.FILA_GATEWAY)
-
 
 if __name__ == '__main__':
 	main()
