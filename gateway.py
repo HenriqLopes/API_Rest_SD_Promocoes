@@ -6,7 +6,8 @@ import defs
 import prot
 import rbt
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
+import json, time, queue
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -23,10 +24,34 @@ itens = {}
 
 CHAVE_PRIVADA = "chaves_privadas/priv_gate.der"
 
+#********* SSE ********
+# cada conexão SSE recebe sua própria fila
+clientes_sse: list[queue.Queue] = []
+
+def notificar_cliente(evento: dict):
+	#Envia um evento para todas as conexões SSE abertas.
+	for q in clientes_sse:
+		q.put_nowait(evento)
+
+@app.rote("/stream")
+def stream():
+	def gerador():
+		q = queue.Queue(maxsize=50)
+		clientes_sse.append(q)
+		# Envia estado atual imediatamente ao conectar
+		yield f"data: {json.dumps(list(dict_promo.values()))}\n\n"
+		while True:
+			evento = q.get(timeout=20)
+			yield f"data: {json.dumps(evento)}\n\n"
+	return Response(gerador(), mimetype="text/event-stream",headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+#********** SSE **********
+
 # bloqueia eternamente pra ficar só consumindo sua fila
 def consumir(ch, fila): #Acho que não vai mais ser necessário, porque vai virar a interface web
 	ch.basic_consume(queue=fila, auto_ack=True, on_message_callback=callback)
 	ch.start_consuming()
+
 # função chamada sempre que um pacote é lido
 def callback(ch, method, properties, body):
 	global dict_promo
@@ -48,6 +73,8 @@ def callback(ch, method, properties, body):
 
 		id = prot.le_id(pacote)
 		dict_promo[id] = pacote # adicionando o id novo no pacote
+		#notificar_cliente(list(dict_promo.values())) # Envia o pacote novo para o SSE atualizar
+
 		#prot.print_pacote(dict_promo[id])
 	else:
 		print("[] assinatura invalida promo")
@@ -62,6 +89,9 @@ def callback(ch, method, properties, body):
 		promo = dict_promo[id]
 		promo['votos'] = n_votos
 
+		#notificar_cliente(list(dict_promo.values()))
+
+
 		if (n_votos > 5): #HOT DEAL
 			promo['hot'] = True
 		elif (n_votos < 5): 
@@ -71,6 +101,7 @@ def callback(ch, method, properties, body):
 		print("[] assinatura invalida rank")
 
 	print("[] encerrando consumo")
+
 	ch.stop_consuming()
 
 # envia um pacote ja finalizado para PROMO
@@ -144,6 +175,7 @@ def atualiza_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 		updated_data = request.get_json()
 
 		pacote = prot.dicio_p_pacote(updated_data)
+		print("Passei dicio pacote")
 
 		voto = updated_data.get("voto")
 		if voto:
@@ -167,15 +199,47 @@ def atualiza_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 	
 	return jsonify({"error": "item not found"}), 404
 
-#Rota para definir interesse em categoria
+#Dicionário global relacionando {email[interesses]}
+interesses = {}
+
 @app.route("/interesse", methods=["POST"])
 def registrar_interesse():
-	return null
+	updated_interest = request.get_json()
+
+	email = updated_interest.get("email")
+	categoria = updated_interest.get("categoria")
+
+	if not email or categoria is None:
+		return jsonify({"error" : "email e categoria são obrigatórios"}), 400
+	
+	if email not in interesses:
+		interesses[email] = []
+	
+	#Relaciona uma categoria ao email do usuário
+	if categoria not in interesses[email]:
+		interesses[email].append(categoria)
+
+	return jsonify({"email" : email, "categorias": interesses[email]}), 201
 
 #Apaga interesse em uma categoria
 @app.route("/interesse", methods=["DELETE"])
 def cancelar_interesse():
-	return null
+
+	updated_interest = request.get_json()
+
+	email = updated_interest.get("email")
+	categoria = updated_interest.get("categoria")
+
+	if not email or categoria is None:
+		return jsonify({"error" : "email e categoria são obrigatórios"}), 400
+	
+	if email not in interesses or categoria not in interesses[email]:
+		interesses[email] = []
+		return jsonify({"error": "interesse não encontrado"}), 404
+
+	interesses[email].remove(categoria)
+	
+	return jsonify({"email" : email, "categorias": interesses[email]}), 200
 
 #Permite apagar uma promoção (Se pá nem vamos usar)
 @app.route('/promocoes/<int:item_id>', methods=["DELETE"])
@@ -190,6 +254,8 @@ def apaga_promocao(item_id):
 		return jsonify({"message": "Item deleted"}), 200
 	else:
 		return jsonify({"error": "Item not found"}), 404
+	
+
 
 def main():
 	global dict_promo

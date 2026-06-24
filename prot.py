@@ -13,7 +13,7 @@ TAM_BYT_VOT = 1
 INI_BYT_EML = INI_BYT_VOT + TAM_BYT_VOT
 TAM_BYT_EML = 29 #29 caracteres todo email 
 INI_BYT_PRE = INI_BYT_EML + TAM_BYT_EML
-TAM_BYT_PRE = 8 #1 double
+TAM_BYT_PRE = 4 #1 double
 INI_BYT_NRK = INI_BYT_PRE + TAM_BYT_PRE
 TAM_BYT_NRK = 4
 INI_BYT_RKN = INI_BYT_NRK + TAM_BYT_NRK
@@ -93,10 +93,10 @@ def print_pacote(msg):
 	print(f"{le_n_rk(msg)}: {le_rk_num_n(msg, 1)}, {le_rk_num_n(msg, 2)}, {le_rk_num_n(msg, 3)}, {le_rk_num_n(msg, 4)}")
 
 def escreve_preco(msg, preco):
-	msg[INI_BYT_PRE : INI_BYT_PRE + TAM_BYT_PRE] = list(struct.pack('d', float(preco)))
+	msg[INI_BYT_PRE : INI_BYT_PRE + TAM_BYT_PRE] = int_para_chars(preco, TAM_BYT_PRE)
 
 def le_preco(msg):
-	return struct.unpack('d', bytes(msg[INI_BYT_PRE : INI_BYT_PRE + TAM_BYT_PRE]))[0]
+	return chars_para_int(msg[INI_BYT_PRE : (INI_BYT_PRE + TAM_BYT_PRE)])
 
 def escreve_n_votos(msg, n_votos):
 	msg[INI_BYT_NVT : (INI_BYT_NVT + TAM_BYT_NVT)] = int_para_chars(id, TAM_BYT_NVT)
@@ -137,8 +137,6 @@ def pacote_p_dicio(pacote):
 		dicio['nome'] = nome
 
 	# ...
-	
-	
 
 	email =  le_email(pacote)
 	if email != ("a" * TAM_BYT_EML): #email padrão

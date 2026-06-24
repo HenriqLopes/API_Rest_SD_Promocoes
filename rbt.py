@@ -29,6 +29,7 @@ def valida_assinatura_loja(msg, assinatura, chave_publica):
 	key = RSA.import_key(open(chave_publica, 'rb').read())
 	msg_bytes = "".join(msg).encode()
 	h = SHA256.new(msg_bytes)
+	print(f"h: {h}")
 
 	try:
 		assinatura_bytes = base64.b64decode(assinatura)
