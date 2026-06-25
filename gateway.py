@@ -17,7 +17,7 @@ CORS(app) # Permite requisições de outras portas/domínios
 
 #estrutura que armazena as promos ja validas
 # dicionario de dicionarios
-dict_promo = {}
+itens = {}
 
 ch = None
 
@@ -41,7 +41,7 @@ def stream():
 		q = queue.Queue(maxsize=50)
 		clientes_sse.append(q)
 		# Envia estado atual imediatamente ao conectar
-		yield f"data: {json.dumps(list(dict_promo.values()))}\n\n"
+		yield f"data: {json.dumps(list(itens.values()))}\n\n"
 		while True:
 			evento = q.get(timeout=20)
 			yield f"data: {json.dumps(evento)}\n\n"
@@ -66,7 +66,7 @@ def consumir(): #Acho que não vai mais ser necessário, porque vai virar a inte
 
 # função chamada sempre que um pacote é lido
 def callback(ch, method, properties, body):
-	global dict_promo
+	global itens
 	
 	print("[] pacote recebido")
 	pacote = list(chr(b) for b in body)
@@ -84,10 +84,12 @@ def callback(ch, method, properties, body):
 		print("[] assinatura valida promo")
 
 		id = prot.le_id(pacote)
-		dict_promo[id] = pacote # adicionando o id novo no pacote
-		#notificar_cliente(list(dict_promo.values())) # Envia o pacote novo para o SSE atualizar
+		itens[id] = prot.pacote_p_dicio(pacote) # adicionando o id novo no pacote
+		
+		#TODO acho que isso aqui n funciona.
+		notificar_cliente(list(itens.values())) # Envia o pacote novo para o SSE atualizar
 
-		#prot.print_pacote(dict_promo[id])
+		#prot.print_pacote(itens[id])
 	else:
 		print("[] assinatura invalida promo")
 
@@ -98,11 +100,10 @@ def callback(ch, method, properties, body):
 		id = prot.le_id(pacote)
 		n_votos = prot.le_n_votos(pacote)
 
-		promo = dict_promo[id]
+		promo = itens[id]
 		promo['votos'] = n_votos
 
-		#notificar_cliente(list(dict_promo.values()))
-
+		#notificar_cliente(list(itens.values()))
 
 		if (n_votos > 5): #HOT DEAL
 			promo['hot'] = True
@@ -123,8 +124,12 @@ def envia_promo(dados):
 	return
 
 # envia um pacote ja finalizado para RANK
-def envia_voto(ch, dados):
+def envia_voto(dados):
+
+	connection, ch = rbt.inic_conec(defs.EXCH)
 	rbt.envia_msg(ch, dados, defs.R_KEY_RANKING, defs.EXCH)
+	connection.close()
+
 	return
 
 def criar_promocao(new_item):
@@ -139,6 +144,8 @@ def criar_promocao(new_item):
 	sha_loja = new_item['sha']
 	prot.escreve_sha(pacote, sha_loja)
 	prot.escreve_id(pacote, new_id)
+	prot.escreve_n_rk(pacote, 1)
+	prot.escreve_rk_num_n(pacote, new_item["categoria"], 1)
 	#prot.escreve_sha(pacote, new_item["sha"]) não assina do gate pq ta com a assinatura da loja
 
 	print("[] enviando para promo")
@@ -193,8 +200,6 @@ def atualiza_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 		voto = updated_data.get("voto")
 		if voto:
 
-			global ch
-
 			if voto > 0:
 				prot.escreve_voto(pacote, 's') # +1
 			elif voto < 0:
@@ -203,7 +208,7 @@ def atualiza_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 			prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
 			prot.escreve_sha(pacote, rbt.gera_assinatura_msg(prot.chars_para_str(pacote)))
 			#print(f"[] SHA adicionada: {prot.le_sha(pacote)}")
-			envia_voto(ch, prot.pacote_para_string(pacote))
+			envia_voto(prot.pacote_para_string(pacote))
 
 			#id = updated_data['id']
 			#itens[id]["voto"] += voto isso aqui vai ser feito no callback
@@ -228,7 +233,7 @@ def registrar_interesse():
 	if email not in interesses:
 		interesses[email] = []
 	
-	#Relaciona uma categoria ao email do usuário
+	#Relaciona uma categoria ao email do usuário TODO chefia o usuario n bota email não. é só interesse.
 	if categoria not in interesses[email]:
 		interesses[email].append(categoria)
 
@@ -269,7 +274,6 @@ def apaga_promocao(item_id):
 		return jsonify({"error": "Item not found"}), 404
 
 def main():
-	global dict_promo
 	global itens
 
 	t = threading.Thread(target=consumir, daemon=True)

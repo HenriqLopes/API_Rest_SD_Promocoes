@@ -9,6 +9,8 @@ nomes = ['Garrafa de agua', 'Caneta', 'Lapis', 'Borracha', 'Caderno', 'Mochila',
 PRECO_MIN = 0
 PRECO_MAX = 50
 emails = ['gustavobuenodacosta@gmail.com', 'buenogustavodacosta@gmail.com']
+#keys = ['livro', 'roupa', 'esporte', 'domestico', 'comida']
+keys = [2, 3, 4, 5, 1]
 
 while True:
 
@@ -17,6 +19,8 @@ while True:
 	nome = random.choice(nomes)
 	preco = random.randint(PRECO_MIN, PRECO_MAX)
 	email = random.choice(emails)
+	categoria = random.choice(keys)
+
 	chave = None
 	if (email == 'gustavobuenodacosta@gmail.com'):
 		chave = 'tools/priv_loj1.der'
@@ -26,7 +30,8 @@ while True:
 	promo = {
 		"nome": nome,
 		"email": email,
-		"preco": preco
+		"preco": preco,
+		"categoria": categoria
 	}
 
 	sha = rbt.gera_assinatura_msg(str(promo),chave)

@@ -19,8 +19,8 @@ def callback(ch, method, properties, pacote):
 
 	nome = prot.le_nome(pacote)
 	preco = prot.le_preco(pacote)
-	print(preco)
 	email = prot.le_email(pacote)
+	categ = prot.le_rk_num_n(pacote, 1)
 	chave = None
 	if (email == 'gustavobuenodacosta@gmail.com'):
 		chave = 'tools/publ_loj1.der'
@@ -30,7 +30,8 @@ def callback(ch, method, properties, pacote):
 	promo = {
 		"nome": nome,
 		"email": email,
-		"preco": preco
+		"preco": preco,
+		"categoria": categ
 	}
 
 	assinatura = prot.le_sha(pacote)

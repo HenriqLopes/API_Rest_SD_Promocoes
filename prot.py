@@ -132,18 +132,19 @@ def pacote_p_dicio(pacote):
 	dicio = {}
 
 	nome =  le_nome(pacote)
-	if nome != ("a" * TAM_BYT_NOM): #nome padrão
-		dicio['nome'] = nome
+	dicio['nome'] = nome
 
-	# ...
+	preco =  le_preco(pacote)
+	dicio['preco'] = preco
 
 	email =  le_email(pacote)
-	if email != ("a" * TAM_BYT_EML): #email padrão
-		dicio['email'] = email
+	dicio['email'] = email
 
-	id =  le_id(pacote)
-	if id != 0: #id padrão
-		dicio['id'] = id
+	categoria =  le_rk_num_n(pacote, 1)
+	dicio['categoria'] = categoria
+
+	votos =  le_n_votos(pacote)
+	dicio['votos'] = votos
 
 	return dicio
 
