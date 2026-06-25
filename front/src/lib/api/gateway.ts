@@ -111,3 +111,20 @@ export async function cancelarInteresse(payload: InterestPayload): Promise<void>
   });
   await handleResponse<unknown>(res);
 }
+
+export function abrirStreamPromocoes(
+  onMessage: (promotions: Promotion[]) => void,
+  onError?: (e: Event) => void,
+): EventSource {
+  const es = new EventSource(`${BASE_URL}/stream`);
+
+  es.onmessage = (event) => {
+    const raw = JSON.parse(event.data as string) as Record<string, unknown>[];
+    onMessage(raw.map(normalizePromotion));
+  };
+
+  if (onError) es.onerror = onError;
+
+  return es;
+}
+

@@ -1,13 +1,14 @@
 /**
  * use-promocoes.ts
- * Hook para buscar e gerenciar a lista de promoções vindas do gateway.
+ * Hook para buscar e gerenciar a lista de promoções vindas do gateway via SSE.
  *
- * - Busca ao montar e expõe `refetch` para atualização manual
- * - Enquanto o gateway não estiver rodando, retorna array vazio e expõe o erro
+ * - Abre uma conexão SSE ao montar e recebe atualizações em tempo real
+ * - Enquanto o gateway não estiver rodando, retorna dados de exemplo (mock)
+ * - Fecha a conexão SSE ao desmontar o componente
  */
 
-import { useCallback, useEffect, useState } from "react";
-import { listarPromocoes } from "@/lib/api/gateway";
+import { useEffect, useRef, useState } from "react";
+import { abrirStreamPromocoes } from "@/lib/api/gateway";
 import type { Promotion } from "@/lib/mock-data";
 import { MOCK_PROMOTIONS } from "@/lib/mock-data";
 
@@ -26,25 +27,31 @@ export function usePromocoes() {
     isMock: false,
   });
 
-  const fetch = useCallback(async () => {
-    setState((s) => ({ ...s, loading: true, error: null }));
-    try {
-      const data = await listarPromocoes();
-      setState({ promotions: data, loading: false, error: null, isMock: false });
-    } catch (err) {
-      // Gateway indisponível — usa dados de exemplo para visualização
-      setState({
-        promotions: MOCK_PROMOTIONS,
-        loading: false,
-        error: null,
-        isMock: true,
-      });
-    }
-  }, []);
+  // Ref para poder fechar e reabrir o EventSource no refetch
+  const esRef = useRef<EventSource | null>(null);
+
+  function conectar() {
+    // Fecha conexão anterior se existir
+    esRef.current?.close();
+
+    setState((s) => ({ ...s, loading: true, error: null, isMock: false }));
+
+    esRef.current = abrirStreamPromocoes(
+      (data) => {
+        setState({ promotions: data, loading: false, error: null, isMock: false });
+      },
+      () => {
+        // Gateway indisponível — usa dados de exemplo para visualização
+        setState({ promotions: MOCK_PROMOTIONS, loading: false, error: null, isMock: true });
+        esRef.current?.close();
+      },
+    );
+  }
 
   useEffect(() => {
-    fetch();
-  }, [fetch]);
+    conectar();
+    return () => esRef.current?.close();
+  }, []);
 
-  return { ...state, refetch: fetch };
+  return { ...state, refetch: conectar };
 }
