@@ -17,7 +17,6 @@ CORS(app) # Permite requisições de outras portas/domínios
 
 #estrutura que armazena as promos ja validas
 # dicionario de dicionarios
-itens = {}
 
 ch = None
 
@@ -113,7 +112,6 @@ def callback(ch, method, properties, body):
 	else:
 		print("[] assinatura invalida rank")
 
-
 # envia um pacote ja finalizado para PROMO
 def envia_promo(dados):
 
@@ -171,6 +169,21 @@ def lista_promocoes():
 	global itens
 	return jsonify(itens), 200 #supondo que o email ta como ref de cada promo isso aqui é bem insguro né (ai coitado ele é todo inseguro KSKSKSK perdão).
 
+# Busca todas as promoções das categorias informadas
+@app.route("/promocoes/<string:categorias>", methods=["GET"])
+def lista_promocoes_categ(categorias):
+	ids_categ = [int(x) for x in categorias.split(",")]
+
+	itens_ret = []
+
+	global itens
+
+	for i in itens.values():
+		if i["categoria"] in ids_categ:
+			itens_ret.append(i)
+
+	return jsonify(itens_ret), 200
+
 #Busca as promoções por categoria
 @app.route('/promocoes/<int:item_id>', methods=["GET"])
 def lista_promocao_id(item_id):
@@ -218,7 +231,7 @@ def atualiza_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 	return jsonify({"error": "item not found"}), 404
 
 #Dicionário global relacionando {email[interesses]}
-interesses = {}
+'''interesses = {}
 
 @app.route("/interesse", methods=["POST"])
 def registrar_interesse():
@@ -257,7 +270,7 @@ def cancelar_interesse():
 
 	interesses[email].remove(categoria)
 	
-	return jsonify({"email" : email, "categorias": interesses[email]}), 200
+	return jsonify({"email" : email, "categorias": interesses[email]}), 200'''
 
 #Permite apagar uma promoção (Se pá nem vamos usar)
 @app.route('/promocoes/<int:item_id>', methods=["DELETE"])
