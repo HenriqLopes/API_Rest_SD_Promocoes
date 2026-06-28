@@ -127,4 +127,3 @@ export function abrirStreamPromocoes(
 
   return es;
 }
-

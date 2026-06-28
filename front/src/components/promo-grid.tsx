@@ -6,7 +6,7 @@ type Props = {
   promotions: Promotion[];
   emptyMessage?: string;
   loading?: boolean;
-  isMock?: boolean;
+  offline?: boolean;
 };
 
 function PromoCardSkeleton() {
@@ -27,7 +27,7 @@ export function PromoGrid({
   promotions,
   emptyMessage,
   loading = false,
-  isMock = false,
+  offline = false,
 }: Props) {
   const { votes, toggle, adjusted } = useVotes();
 
@@ -37,6 +37,17 @@ export function PromoGrid({
         {Array.from({ length: 8 }).map((_, i) => (
           <PromoCardSkeleton key={i} />
         ))}
+      </div>
+    );
+  }
+
+  if (offline) {
+    return (
+      <div className="rounded-3xl border border-dashed border-slate-300 bg-card p-12 text-center">
+        <p className="text-sm text-muted-foreground">
+          Gateway indisponível — inicie o{" "}
+          <code className="rounded bg-slate-100 px-1">gateway.py</code> para ver as promoções.
+        </p>
       </div>
     );
   }
@@ -52,24 +63,16 @@ export function PromoGrid({
   }
 
   return (
-    <div className="space-y-4">
-      {isMock && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-700">
-          ⚠ Gateway indisponível — exibindo dados de exemplo. Inicie o{" "}
-          <code className="rounded bg-amber-100 px-1">gateway.py</code> para ver promoções reais.
-        </div>
-      )}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {promotions.map((p) => (
-          <PromoCard
-            key={p.id}
-            promo={p}
-            count={adjusted(p.id, p.votes)}
-            liked={votes[p.id] === 1}
-            onToggle={() => toggle(p.id)}
-          />
-        ))}
-      </div>
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {promotions.map((p) => (
+        <PromoCard
+          key={p.id}
+          promo={p}
+          count={adjusted(p.id, p.votes)}
+          liked={votes[p.id] === 1}
+          onToggle={() => toggle(p.id)}
+        />
+      ))}
     </div>
   );
 }

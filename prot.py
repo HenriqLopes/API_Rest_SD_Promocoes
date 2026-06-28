@@ -131,6 +131,9 @@ def pacote_p_dicio(pacote):
 
 	dicio = {}
 
+	id = le_id(pacote)
+	dicio['id'] = id
+
 	nome =  le_nome(pacote)
 	dicio['nome'] = nome
 

@@ -14,7 +14,7 @@ keys = [2, 3, 4, 5, 1]
 
 while True:
 
-	time.sleep(5) #registra uma promo aleatoria a cada 5 seg
+	time.sleep(2) #registra uma promo aleatoria a cada 5 seg
 
 	nome = random.choice(nomes)
 	preco = random.randint(PRECO_MIN, PRECO_MAX)

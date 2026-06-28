@@ -29,7 +29,7 @@ def callback(ch, method, properties, pacote):
 
 	print("[] validando assinatura")
 	#valida se a sha ta correta, se tiver add a promo na lista
-	if rbt.valida_assinatura(pacote, SHA, defs.CHAVE_PUBLICA[defs.GATE]):
+	if rbt.valida_assinatura(pacote, SHA, defs.GATE):
 		print("[] assinatura valida")
 		id = prot.le_id(pacote)
 
@@ -46,7 +46,7 @@ def callback(ch, method, properties, pacote):
 		
 			print(f"[] promo de id {id} com {n} votos")
 			
-			prot.escreve_sha(pacote,(rbt.gera_assinatura_msg(prot.chars_para_str(pacote)))) 
+			prot.escreve_sha(pacote,(rbt.gera_assinatura_msg(prot.chars_para_str(pacote), CHAVE_PRIVADA))) 
 			
 			rbt.envia_msg(ch, prot.pacote_para_string(pacote), defs.R_KEY_VALIDAS, defs.EXCH) #manda pra atualizar contador de votos
 

@@ -19,7 +19,7 @@ export const Route = createFileRoute("/minhas-categorias")({
 
 function MinhasCategorias() {
   const { interests } = useInterests();
-  const { promotions, loading, isMock } = usePromocoes();
+  const { promotions, loading, offline } = usePromocoes();
 
   return (
     <PageShell>
@@ -51,7 +51,7 @@ function MinhasCategorias() {
           promotions={promotions}
           emptyMessage="Sem promoções ativas no momento."
           loading={loading}
-          isMock={isMock}
+          offline={offline}
         />
       )}
     </PageShell>

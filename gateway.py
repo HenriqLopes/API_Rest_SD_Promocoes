@@ -79,7 +79,7 @@ def callback(ch, method, properties, body):
 	print("[] validando assinatura")
 	
 	#retorno do promo
-	if rbt.valida_assinatura(pacote, SHA,defs.PROM):
+	if rbt.valida_assinatura(pacote, SHA, defs.CHAVE_PUBLICA[defs.PROM]):
 		print("[] assinatura valida promo")
 
 		id = prot.le_id(pacote)
@@ -102,7 +102,9 @@ def callback(ch, method, properties, body):
 		promo = itens[id]
 		promo['votos'] = n_votos
 
-		#notificar_cliente(list(itens.values()))
+		print("sse entra")
+		notificar_cliente(list(itens.values()))
+		print("Sse sai")
 
 		if (n_votos > 5): #HOT DEAL
 			promo['hot'] = True
@@ -208,6 +210,7 @@ def atualiza_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 		updated_data = request.get_json()
 
 		pacote = prot.dicio_p_pacote(updated_data)
+		prot.escreve_id(pacote, item_id)
 		print("Passei dicio pacote")
 
 		voto = updated_data.get("voto")
@@ -215,62 +218,24 @@ def atualiza_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 
 			if voto > 0:
 				prot.escreve_voto(pacote, 's') # +1
+				print("Voto +1")
 			elif voto < 0:
 				prot.escreve_voto(pacote, 'n') # -1
+				print("Voto -1")
 			
 			prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
-			prot.escreve_sha(pacote, rbt.gera_assinatura_msg(prot.chars_para_str(pacote)))
+			prot.escreve_sha(pacote, rbt.gera_assinatura_msg(prot.chars_para_str(pacote),CHAVE_PRIVADA))
 			#print(f"[] SHA adicionada: {prot.le_sha(pacote)}")
+			print("Eviando para rank")
 			envia_voto(prot.pacote_para_string(pacote))
 
 			#id = updated_data['id']
-			#itens[id]["voto"] += voto isso aqui vai ser feito no callback
-			
+			#itens[id]["voto"] += voto isso aqui vai ser feito no callbacks
+		
+		print("Saí do If voto")
 		return jsonify(item),200 # retorna o item com os votos atualizados.
 	
 	return jsonify({"error": "item not found"}), 404
-
-#Dicionário global relacionando {email[interesses]}
-'''interesses = {}
-
-@app.route("/interesse", methods=["POST"])
-def registrar_interesse():
-	updated_interest = request.get_json()
-
-	email = updated_interest.get("email")
-	categoria = updated_interest.get("categoria")
-
-	if not email or categoria is None:
-		return jsonify({"error" : "email e categoria são obrigatórios"}), 400
-	
-	if email not in interesses:
-		interesses[email] = []
-	
-	#Relaciona uma categoria ao email do usuário TODO chefia o usuario n bota email não. é só interesse.
-	if categoria not in interesses[email]:
-		interesses[email].append(categoria)
-
-	return jsonify({"email" : email, "categorias": interesses[email]}), 201
-
-#Apaga interesse em uma categoria
-@app.route("/interesse", methods=["DELETE"])
-def cancelar_interesse():
-
-	updated_interest = request.get_json()
-
-	email = updated_interest.get("email")
-	categoria = updated_interest.get("categoria")
-
-	if not email or categoria is None:
-		return jsonify({"error" : "email e categoria são obrigatórios"}), 400
-	
-	if email not in interesses or categoria not in interesses[email]:
-		interesses[email] = []
-		return jsonify({"error": "interesse não encontrado"}), 404
-
-	interesses[email].remove(categoria)
-	
-	return jsonify({"email" : email, "categorias": interesses[email]}), 200'''
 
 #Permite apagar uma promoção (Se pá nem vamos usar)
 @app.route('/promocoes/<int:item_id>', methods=["DELETE"])
@@ -292,7 +257,7 @@ def main():
 	t = threading.Thread(target=consumir, daemon=True)
 	t.start()
 
-	app.run(debug=True)
+	app.run(debug=True,threaded=True)
 
 if __name__ == '__main__':
 	main()

@@ -17,7 +17,7 @@ export const Route = createFileRoute("/hot-deals")({
 });
 
 function HotDeals() {
-  const { promotions, loading, isMock } = usePromocoes();
+  const { promotions, loading, offline } = usePromocoes();
 
   const hot = promotions.filter((p) => p.hot === true);
 
@@ -35,7 +35,7 @@ function HotDeals() {
         promotions={hot}
         emptyMessage="Ainda nenhuma promoção atingiu o limite de hot deal."
         loading={loading}
-        isMock={isMock}
+        offline={offline}
       />
     </PageShell>
   );

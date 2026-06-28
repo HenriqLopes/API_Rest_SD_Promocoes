@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { promotions, loading, isMock, refetch } = usePromocoes();
+  const { promotions, loading, offline, refetch } = usePromocoes();
 
   return (
     <PageShell>
@@ -46,7 +46,7 @@ function Index() {
       <PromoGrid
         promotions={promotions}
         loading={loading}
-        isMock={isMock}
+        offline={offline}
       />
     </PageShell>
   );
