@@ -53,10 +53,21 @@ def callback(ch, method, properties, pacote):
 			if n > VOTES_HOT_DEAL:
 				rbt.envia_msg(ch, prot.pacote_para_string(pacote), defs.R_KEYS[defs.PROM_QUENTES], defs.EXCH) #manda pra mandar email e definir como hot
 			
-			dict_promo[id] = (pac, n)
+			dict_promo[id] = (pacote, n)
 		else:
-			dict_promo[id] = (pacote, 1)
-			print(f"[] promo de id {id} com {1} voto")
+			# Primeiro voto - inicializa com 1 voto e envia para o gateway
+			voto = prot.le_voto(pacote)
+			n = 1 if voto == 's' else 0
+			
+			prot.escreve_n_votos(pacote, n)
+			print(f"[] promo de id {id} - PRIMEIRO VOTO: {n} votos")
+			
+			prot.escreve_sha(pacote,(rbt.gera_assinatura_msg(prot.chars_para_str(pacote), CHAVE_PRIVADA)))
+			
+			# IMPORTANTE: envia para o gateway atualizar o contador
+			rbt.envia_msg(ch, prot.pacote_para_string(pacote), defs.R_KEY_VALIDAS, defs.EXCH)
+			
+			dict_promo[id] = (pacote, n)
 	else:
 		print("[] assinatura invalida")
 

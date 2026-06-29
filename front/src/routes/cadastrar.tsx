@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { PageShell } from "@/components/page-shell";
 import { criarPromocao } from "@/lib/api/gateway";
+import { CATEGORIES, CATEGORY_NAME_TO_ID, type Category } from "@/lib/mock-data";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/cadastrar")({
@@ -26,11 +27,13 @@ function CadastrarPage() {
 
     try {
       const formData = new FormData(e.currentTarget);
+      const categoriaNome = formData.get("categoria") as Category;
 
       await criarPromocao({
         nome: formData.get("nome") as string,
         email: formData.get("email") as string,
         preco: parseFloat(formData.get("preco") as string),
+        categoria: CATEGORY_NAME_TO_ID[categoriaNome],
         sha: "",
       });
 
@@ -78,6 +81,21 @@ function CadastrarPage() {
               placeholder="contato@loja.com"
               className={inputCls}
             />
+          </Field>
+
+          <Field label="Categoria">
+            <select
+              required
+              name="categoria"
+              className={inputCls}
+            >
+              <option value="">Selecione uma categoria</option>
+              {CATEGORIES.map((cat) => (
+                <option key={cat.id} value={cat.name}>
+                  {cat.emoji} {cat.name}
+                </option>
+              ))}
+            </select>
           </Field>
 
           <Field label="Preço">

@@ -12,7 +12,6 @@ type Props = {
 function PromoCardSkeleton() {
   return (
     <div className="flex flex-col rounded-3xl border border-slate-200 bg-card p-4 animate-pulse">
-      <div className="mb-4 aspect-square w-full rounded-2xl bg-slate-100" />
       <div className="space-y-2">
         <div className="h-3 w-1/2 rounded bg-slate-100" />
         <div className="h-4 w-full rounded bg-slate-100" />
@@ -68,7 +67,7 @@ export function PromoGrid({
         <PromoCard
           key={p.id}
           promo={p}
-          count={adjusted(p.id, p.votes)}
+          count={adjusted(p.id, p.votos)}
           liked={votes[p.id] === 1}
           onToggle={() => toggle(p.id)}
         />

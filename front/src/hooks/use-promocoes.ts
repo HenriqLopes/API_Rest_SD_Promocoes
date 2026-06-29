@@ -31,9 +31,12 @@ export function usePromocoes() {
 
     esRef.current = abrirStreamPromocoes(
       (data) => {
+        console.log('[usePromocoes] Recebeu dados via SSE:', data.length, 'promoções');
+        console.log('[usePromocoes] Primeira promoção (amostra):', data[0]);
         setState({ promotions: data, loading: false, offline: false });
       },
       () => {
+        console.log('[usePromocoes] SSE erro - gateway offline');
         setState({ promotions: [], loading: false, offline: true });
         esRef.current?.close();
       },

@@ -99,7 +99,7 @@ def le_preco(msg):
 	return chars_para_int(msg[INI_BYT_PRE : (INI_BYT_PRE + TAM_BYT_PRE)])
 
 def escreve_n_votos(msg, n_votos):
-	msg[INI_BYT_NVT : (INI_BYT_NVT + TAM_BYT_NVT)] = int_para_chars(id, TAM_BYT_NVT)
+	msg[INI_BYT_NVT : (INI_BYT_NVT + TAM_BYT_NVT)] = int_para_chars(n_votos, TAM_BYT_NVT)
 def le_n_votos(msg):
 	return chars_para_int(msg[INI_BYT_NVT : (INI_BYT_NVT + TAM_BYT_NVT)])
 

@@ -9,6 +9,7 @@ export type CreatePromoPayload = {
   nome: string;
   email: string;
   preco: number;
+  categoria: number; // ID da categoria (1-5)
   sha: string;
 };
 
@@ -46,7 +47,7 @@ function normalizePromotion(raw: Record<string, unknown>): Promotion {
     ...(raw as Promotion),
     id: String(raw.id),
     preco: Number(raw.preco ?? 0),
-    votes: Number(raw.votos ?? raw.votes ?? 0), // back usa 'votos'
+    votos: Number(raw.votos ?? 0), // back usa 'votos' - padronizado
     hot: raw.hot === true,
   };
 }

@@ -20,6 +20,11 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const { promotions, loading, offline, refetch } = usePromocoes();
+  
+  console.log('[Index/Todas] Total de promoções:', promotions.length);
+  if (promotions.length > 0) {
+    console.log('[Index/Todas] Categorias das promoções:', promotions.map(p => ({ id: p.id, categoria: p.categoria })));
+  }
 
   return (
     <PageShell>

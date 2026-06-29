@@ -79,13 +79,20 @@ def callback(ch, method, properties, body):
 	print("[] validando assinatura")
 	
 	#retorno do promo
-	if rbt.valida_assinatura(pacote, SHA, defs.CHAVE_PUBLICA[defs.PROM]):
+	if rbt.valida_assinatura(pacote, SHA,defs.PROM):
 		print("[] assinatura valida promo")
 
 		id = prot.le_id(pacote)
 		itens[id] = prot.pacote_p_dicio(pacote) # adicionando o id novo no pacote
 		
-		#TODO acho que isso aqui n funciona.
+		# Inicializa campos obrigatórios para o frontend
+		if 'votos' not in itens[id]:
+			itens[id]['votos'] = 0
+		if 'hot' not in itens[id]:
+			itens[id]['hot'] = False
+		if 'categoria' not in itens[id]:
+			itens[id]['categoria'] = 1  # categoria padrão: Comida
+		
 		notificar_cliente(list(itens.values())) # Envia o pacote novo para o SSE atualizar
 
 		#prot.print_pacote(itens[id])
@@ -99,18 +106,20 @@ def callback(ch, method, properties, body):
 		id = prot.le_id(pacote)
 		n_votos = prot.le_n_votos(pacote)
 
-		promo = itens[id]
-		promo['votos'] = n_votos
+		if id in itens:
+			promo = itens[id]
+			promo['votos'] = n_votos
 
-		print("sse entra")
-		notificar_cliente(list(itens.values()))
-		print("Sse sai")
+			if n_votos > 3:
+				promo['hot'] = True
+			else:
+				promo['hot'] = False
 
-		if (n_votos > 5): #HOT DEAL
-			promo['hot'] = True
-		elif (n_votos < 5): 
-			promo['hot'] = False
-
+			# Notifica SSE depois de atualizar todos os campos
+			print("[] notificando clientes SSE")
+			notificar_cliente(list(itens.values()))
+		else:
+			print(f"[] AVISO: promoção id {id} não encontrada no gateway")
 	else:
 		print("[] assinatura invalida rank")
 
@@ -133,26 +142,25 @@ def envia_voto(dados):
 	return
 
 def criar_promocao(new_item):
-
 	global itens 
 	new_id = (len(itens) + 1) #novo id sequencial
 	new_item["id"] = new_id
 
-	#=========================================
 	pacote = prot.dicio_p_pacote(new_item) # id, nome, preço e email
 
 	sha_loja = new_item['sha']
+	categoria = new_item.get('categoria', 1) # categoria vinda do frontend (default: 1 = Comida)
+	
 	prot.escreve_sha(pacote, sha_loja)
 	prot.escreve_id(pacote, new_id)
-	prot.escreve_n_rk(pacote, 1)
-	prot.escreve_rk_num_n(pacote, new_item["categoria"], 1)
+	prot.escreve_n_rk(pacote, 1) # número de routing keys = 1
+	prot.escreve_rk_num_n(pacote, categoria, 1) # escreve a categoria na posição 1
 	#prot.escreve_sha(pacote, new_item["sha"]) não assina do gate pq ta com a assinatura da loja
 
-	print("[] enviando para promo")
+	print(f"[] enviando para promo (categoria: {categoria})")
 	prot.print_pacote(pacote)
 
 	envia_promo(prot.pacote_para_string(pacote))
-	#=========================================
 	
 	#itens[new_id] = new_item #ja dicionario isso vai acontecer no callback agora?
 
@@ -186,22 +194,48 @@ def lista_promocoes_categ(categorias):
 
 	return jsonify(itens_ret), 200
 
-#Busca as promoções por categoria
-@app.route('/promocoes/<int:item_id>', methods=["GET"])
-def lista_promocao_id(item_id):
-	global itens
+# Adiciona interesse de um usuário em uma categoria
+@app.route('/interesse', methods=['POST'])
+def registrar_interesse():
+	"""
+	Registra o interesse de um usuário (email) em receber notificações de uma categoria.
+	Body: { "email": "user@exemplo.com", "categoria": "Livro" }
+	"""
+	data = request.get_json()
+	email = data.get('email')
+	categoria = data.get('categoria')
 	
-	item = itens.get(item_id)
+	if not email or not categoria:
+		return jsonify({"error": "Email e categoria são obrigatórios"}), 400
+	
+	# TODO: Implementar persistência de interesses (pode usar dict, DB, arquivo, etc.)
+	# Por enquanto apenas retorna sucesso para não quebrar o front
+	print(f"[] Interesse registrado: {email} -> {categoria}")
+	
+	return jsonify({"message": "Interesse registrado com sucesso"}), 201
 
-	if item: #se é um item
-		return jsonify(item), 200 #esse item é o dicionario de promo, que é enviado no registro. se pa nem precisa de resposta o 200 já é funcionou po.
-    
-	return jsonify({"error": "Item not found"}), 404
+# Cancela interesse de um usuário em uma categoria
+@app.route('/interesse', methods=['DELETE'])
+def cancelar_interesse():
+	"""
+	Remove o interesse de um usuário em uma categoria.
+	Body: { "email": "user@exemplo.com", "categoria": "Livro" }
+	"""
+	data = request.get_json()
+	email = data.get('email')
+	categoria = data.get('categoria')
+	
+	if not email or not categoria:
+		return jsonify({"error": "Email e categoria são obrigatórios"}), 400
+	
+	# TODO: Implementar remoção de persistência de interesses
+	print(f"[] Interesse cancelado: {email} -> {categoria}")
+	
+	return jsonify({"message": "Interesse cancelado com sucesso"}), 200
 
-#Atualiza os campos individugit
+#Atualiza os votos das promoções
 @app.route('/items/<int:item_id>', methods=['PATCH'])
-def atualiza_promo(item_id): #esse atualiza é SÓ PARA VOTOS
-
+def atualiza_voto_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 	global itens
 
 	item = itens.get(item_id)
@@ -215,7 +249,6 @@ def atualiza_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 
 		voto = updated_data.get("voto")
 		if voto:
-
 			if voto > 0:
 				prot.escreve_voto(pacote, 's') # +1
 				print("Voto +1")
@@ -228,28 +261,11 @@ def atualiza_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 			#print(f"[] SHA adicionada: {prot.le_sha(pacote)}")
 			print("Eviando para rank")
 			envia_voto(prot.pacote_para_string(pacote))
-
-			#id = updated_data['id']
-			#itens[id]["voto"] += voto isso aqui vai ser feito no callbacks
 		
 		print("Saí do If voto")
 		return jsonify(item),200 # retorna o item com os votos atualizados.
 	
 	return jsonify({"error": "item not found"}), 404
-
-#Permite apagar uma promoção (Se pá nem vamos usar)
-@app.route('/promocoes/<int:item_id>', methods=["DELETE"])
-def apaga_promocao(item_id):
-
-	global itens
-
-	item = itens.get(item_id)
-
-	if item:
-		del item[item_id] #isso funciona em pyto?
-		return jsonify({"message": "Item deleted"}), 200
-	else:
-		return jsonify({"error": "Item not found"}), 404
 
 def main():
 	global itens
