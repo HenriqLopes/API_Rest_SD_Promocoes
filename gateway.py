@@ -22,6 +22,7 @@ ch = None
 
 #para Rest, dicionario de dicionarios facilmente convertido em JSON 
 itens = {}
+id_at = 1
 
 CHAVE_PRIVADA = "chaves_privadas/priv_gate.der"
 
@@ -37,12 +38,15 @@ def notificar_cliente(evento: dict):
 @app.route("/stream")
 def stream():
 	def gerador():
+		global itens
+		print(itens)
+		
 		q = queue.Queue(maxsize=50)
 		clientes_sse.append(q)
 		# Envia estado atual imediatamente ao conectar
 		yield f"data: {json.dumps(list(itens.values()))}\n\n"
 		while True:
-			evento = q.get(timeout=20)
+			evento = q.get(timeout=300)
 			yield f"data: {json.dumps(evento)}\n\n"
 	return Response(gerador(), mimetype="text/event-stream",headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
@@ -50,8 +54,7 @@ def stream():
 
 # bloqueia eternamente pra ficar só consumindo sua fila
 def consumir(): #Acho que não vai mais ser necessário, porque vai virar a interface web
-
-	global ch	
+	
 	connection, ch = rbt.inic_conec(defs.EXCH)
 	print("[] conexão iniciada")
 	rbt.inic_fila(ch, defs.FILA_GATEWAY, defs.EXCH)
@@ -65,11 +68,10 @@ def consumir(): #Acho que não vai mais ser necessário, porque vai virar a inte
 
 # função chamada sempre que um pacote é lido
 def callback(ch, method, properties, body):
-	global itens
 	
 	print("[] pacote recebido")
 	pacote = list(chr(b) for b in body)
-	#prot.print_pacote(pacote)
+	prot.print_pacote(pacote)
 
 	#pega sha do pacote
 	SHA = prot.le_sha(pacote)
@@ -78,24 +80,34 @@ def callback(ch, method, properties, body):
 	#valida se a sha ta correta, se tiver add a promo na lista
 	print("[] validando assinatura")
 	
+	global itens
+
 	#retorno do promo
 	if rbt.valida_assinatura(pacote, SHA,defs.PROM):
 		print("[] assinatura valida promo")
 
+
 		id = prot.le_id(pacote)
-		itens[id] = prot.pacote_p_dicio(pacote) # adicionando o id novo no pacote
-		
+		#print("nova promo adicionada em itens:")
+		#print(id)
+		dic_n = prot.pacote_p_dicio(pacote)
+		#print(dic_n)
+
 		# Inicializa campos obrigatórios para o frontend
-		if 'votos' not in itens[id]:
-			itens[id]['votos'] = 0
-		if 'hot' not in itens[id]:
-			itens[id]['hot'] = False
-		if 'categoria' not in itens[id]:
-			itens[id]['categoria'] = 1  # categoria padrão: Comida
+		if 'votos' not in dic_n:
+			dic_n['votos'] = 0
+		if 'hot' not in dic_n:
+			dic_n['hot'] = False
+		if 'categoria' not in dic_n:
+			dic_n['categoria'] = 1  # categoria padrão: Comida
 		
+		itens[id] = dic_n # adicionando o id novo no pacote
+		#print(itens[id])
+
 		notificar_cliente(list(itens.values())) # Envia o pacote novo para o SSE atualizar
 
-		#prot.print_pacote(itens[id])
+		print("dicionario recebendo promo")
+		print(itens)
 	else:
 		print("[] assinatura invalida promo")
 
@@ -114,6 +126,8 @@ def callback(ch, method, properties, body):
 				promo['hot'] = True
 			else:
 				promo['hot'] = False
+
+			itens[id] = promo
 
 			# Notifica SSE depois de atualizar todos os campos
 			print("[] notificando clientes SSE")
@@ -142,8 +156,10 @@ def envia_voto(dados):
 	return
 
 def criar_promocao(new_item):
-	global itens 
-	new_id = (len(itens) + 1) #novo id sequencial
+	#global itens 
+	global id_at
+	id_at += 1
+	new_id = (id_at) #novo id sequencial
 	new_item["id"] = new_id
 
 	pacote = prot.dicio_p_pacote(new_item) # id, nome, preço e email
@@ -230,26 +246,24 @@ def atualiza_voto_promo(item_id): #esse atualiza é SÓ PARA VOTOS
 	if item:
 		updated_data = request.get_json()
 
-		pacote = prot.dicio_p_pacote(updated_data)
+		pacote = prot.dicio_p_pacote(item)
 		prot.escreve_id(pacote, item_id)
-		print("Passei dicio pacote")
-
+		
 		voto = updated_data.get("voto")
 		if voto:
 			if voto > 0:
 				prot.escreve_voto(pacote, 's') # +1
-				print("Voto +1")
 			elif voto < 0:
 				prot.escreve_voto(pacote, 'n') # -1
-				print("Voto -1")
 			
 			prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
 			prot.escreve_sha(pacote, rbt.gera_assinatura_msg(prot.chars_para_str(pacote),CHAVE_PRIVADA))
 			#print(f"[] SHA adicionada: {prot.le_sha(pacote)}")
-			print("Eviando para rank")
+			print("[] Eviando para rank")
+			prot.print_pacote(pacote)
+		
 			envia_voto(prot.pacote_para_string(pacote))
 		
-		print("Saí do If voto")
 		return jsonify(item),200 # retorna o item com os votos atualizados.
 	
 	return jsonify({"error": "item not found"}), 404
