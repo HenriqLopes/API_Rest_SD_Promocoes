@@ -4,7 +4,6 @@ import { PromoGrid } from "@/components/promo-grid";
 import { useInterests } from "@/hooks/use-interests";
 import { usePromocoes } from "@/hooks/use-promocoes";
 import { CATEGORY_NAME_TO_ID, type Category } from "@/lib/mock-data";
-import { useMemo } from "react";
 
 export const Route = createFileRoute("/minhas-categorias")({
   head: () => ({
@@ -21,33 +20,12 @@ export const Route = createFileRoute("/minhas-categorias")({
 
 function MinhasCategorias() {
   const { interests } = useInterests();
-  const { promotions, loading, offline } = usePromocoes();
+  const { promotions, loading } = usePromocoes();
   
-  // Converte nomes de categoria para IDs do backend
-  const categoriaIds = useMemo(() => 
-    interests.map((name) => CATEGORY_NAME_TO_ID[name as Category]),
-    [interests]
-  );
-  
-  // Filtra promoções no FRONTEND pelas categorias selecionadas
-  const filteredPromotions = useMemo(() => {
-    if (categoriaIds.length === 0) return [];
-    
-    console.log('[MinhasCategorias] Total de promoções:', promotions.length);
-    console.log('[MinhasCategorias] Categorias selecionadas (IDs):', categoriaIds);
-    console.log('[MinhasCategorias] Categorias selecionadas (nomes):', interests);
-    
-    const filtered = promotions.filter(p => {
-      const hasCategoria = p.categoria && categoriaIds.includes(p.categoria);
-      if (hasCategoria) {
-        console.log(`[MinhasCategorias] ✅ Incluindo promoção #${p.id} (categoria: ${p.categoria})`);
-      }
-      return hasCategoria;
-    });
-    
-    console.log('[MinhasCategorias] Promoções filtradas:', filtered.length);
-    return filtered;
-  }, [promotions, categoriaIds, interests]);
+  const categoriaIds = interests.map((name) => CATEGORY_NAME_TO_ID[name as Category]);
+  const filteredPromotions = categoriaIds.length === 0 
+    ? [] 
+    : promotions.filter(p => p.categoria && categoriaIds.includes(p.categoria));
 
   return (
     <PageShell>
@@ -58,7 +36,7 @@ function MinhasCategorias() {
         <p className="mt-1 text-sm text-muted-foreground">
           {interests.length === 0
             ? "Você ainda não selecionou categorias de interesse."
-            : `Acompanhando: ${interests.join(", ")} (IDs: ${categoriaIds.join(", ")})`}
+            : `Acompanhando: ${interests.join(", ")}`}
         </p>
       </header>
 
@@ -79,7 +57,6 @@ function MinhasCategorias() {
           promotions={filteredPromotions}
           emptyMessage="Sem promoções ativas no momento para as categorias selecionadas."
           loading={loading}
-          offline={offline}
         />
       )}
     </PageShell>

@@ -25,31 +25,20 @@ function CadastrarPage() {
     e.preventDefault();
     setSubmitting(true);
 
-    try {
-      const formData = new FormData(e.currentTarget);
-      const categoriaNome = formData.get("categoria") as Category;
+    const formData = new FormData(e.currentTarget);
+    const categoriaNome = formData.get("categoria") as Category;
 
-      await criarPromocao({
-        nome: formData.get("nome") as string,
-        email: formData.get("email") as string,
-        preco: parseFloat(formData.get("preco") as string),
-        categoria: CATEGORY_NAME_TO_ID[categoriaNome],
-        sha: "",
-      });
+    await criarPromocao({
+      nome: formData.get("nome") as string,
+      email: formData.get("email") as string,
+      preco: parseFloat(formData.get("preco") as string),
+      categoria: CATEGORY_NAME_TO_ID[categoriaNome],
+      sha: "",
+    });
 
-      toast.success("Promoção enviada para validação!", {
-        description:
-          "Após validação da assinatura digital, será publicada na home.",
-      });
-
-      (e.currentTarget as HTMLFormElement).reset();
-    } catch (error) {
-      toast.error("Erro ao enviar promoção", {
-        description: error instanceof Error ? error.message : "Tente novamente",
-      });
-    } finally {
-      setSubmitting(false);
-    }
+    toast.success("Promoção enviada!");
+    (e.currentTarget as HTMLFormElement).reset();
+    setSubmitting(false);
   };
 
   return (
@@ -84,11 +73,7 @@ function CadastrarPage() {
           </Field>
 
           <Field label="Categoria">
-            <select
-              required
-              name="categoria"
-              className={inputCls}
-            >
+            <select required name="categoria" className={inputCls}>
               <option value="">Selecione uma categoria</option>
               {CATEGORIES.map((cat) => (
                 <option key={cat.id} value={cat.name}>
@@ -117,14 +102,10 @@ function CadastrarPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-2xl bg-navy py-4 font-bold text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
+            className="w-full rounded-2xl bg-navy py-4 font-bold text-white"
           >
             {submitting ? "Enviando..." : "Enviar Promoção"}
           </button>
-          <p className="text-center text-xs text-muted-foreground">
-            As mensagens são assinadas digitalmente. Apenas assinaturas válidas
-            são publicadas pelo MS Promoção.
-          </p>
         </form>
       </section>
     </PageShell>
@@ -134,13 +115,7 @@ function CadastrarPage() {
 const inputCls =
   "w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange";
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
       <label className="text-sm font-semibold text-slate-700">{label}</label>

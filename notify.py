@@ -5,12 +5,17 @@ import prot
 
 import rbt
 
-#bibliotecas necessárias para envio do e-mail
+# Bibliotecas nativas do Python para envio de e-mail
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import os
 from dotenv import load_dotenv
-import resend 
 
 CHAVE_PRIVADA = "chaves_privadas/priv_noti.der"
+
+# Carrega variáveis de ambiente do arquivo .env
+load_dotenv()
 
 # bloqueia eternamente pra ficar só consumindo sua fila
 def consumir(ch, fila):
@@ -27,8 +32,9 @@ def callback(ch, method, properties, pacote):
 	prot.escreve_sha(pacote,("0" * prot.TAM_BYT_SHA))
 
 	print("[] validando assinatura")
-	if rbt.valida_assinatura(pacote, SHA,defs.PROM):
-		print("[] assinatura valida")
+	# Hot deals vem do MS Ranking
+	if rbt.valida_assinatura(pacote, SHA, defs.RANK):
+		print("[] assinatura valida - hot deal")
 
 		envia_email(pacote)
 
@@ -54,19 +60,40 @@ def main():
 
 # Envia e-mail avisando que a promoção é uma hotdeal
 def envia_email(pacote):
-	#Pega a API do resend do .env
 	id_promo = prot.le_id(pacote)
-	email_loja = prot.le_email(pacote)
+	email_loja = prot.le_email(pacote).strip()
 	nome_promo = prot.le_nome(pacote)
 	
-	resend.api_key = os.getenv("API_RESEND")
-
-	r = resend.Emails.send({
-		"from": "onboarding@resend.dev",
-		"to": "${email_loja}",
-		"subject": "${id_promo}: ${nome_promo} ",
-		"html": "<p>Parabéns, sua promooção <strong>ID: ${id_promo} ${nome_promo}</strong> virou um <strong>HOT-DEAL</strong>!</p>"
-	})
+	print(f"[] Enviando e-mail para {email_loja} sobre promoção #{id_promo}: {nome_promo}")
+	
+	# Configurações do remetente (Gmail SMTP)
+	remetente = os.getenv("EMAIL_REMETENTE")
+	senha = os.getenv("EMAIL_SENHA")
+	
+	# Cria a mensagem
+	msg = MIMEMultipart()
+	msg['From'] = remetente
+	msg['To'] = email_loja
+	msg['Subject'] = f"Promoção #{id_promo}: {nome_promo} virou HOT DEAL!"
+	
+	corpo = f"""
+	<html>
+		<body>
+			<p>Sua promoção <strong>#{id_promo} - {nome_promo}</strong> virou um <strong>HOT-DEAL</strong>!</p>
+		</body>
+	</html>
+	"""
+	
+	msg.attach(MIMEText(corpo, 'html'))
+	
+	# Envia via SMTP do Gmail
+	server = smtplib.SMTP('smtp.gmail.com', 587)
+	server.starttls()
+	server.login(remetente, senha)
+	server.send_message(msg)
+	server.quit()
+	
+	print(f"[] E-mail enviado com sucesso!")
 
 if __name__ == '__main__':
 	main()

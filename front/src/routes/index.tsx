@@ -19,12 +19,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { promotions, loading, offline, refetch } = usePromocoes();
-  
-  console.log('[Index/Todas] Total de promoções:', promotions.length);
-  if (promotions.length > 0) {
-    console.log('[Index/Todas] Categorias das promoções:', promotions.map(p => ({ id: p.id, categoria: p.categoria })));
-  }
+  const { promotions, loading, refetch } = usePromocoes();
 
   return (
     <PageShell>
@@ -43,16 +38,12 @@ function Index() {
           type="button"
           onClick={refetch}
           disabled={loading}
-          className="mt-1 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 disabled:opacity-50"
+          className="mt-1 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600"
         >
           {loading ? "Carregando..." : "↺ Atualizar"}
         </button>
       </header>
-      <PromoGrid
-        promotions={promotions}
-        loading={loading}
-        offline={offline}
-      />
+      <PromoGrid promotions={promotions} loading={loading} />
     </PageShell>
   );
 }
