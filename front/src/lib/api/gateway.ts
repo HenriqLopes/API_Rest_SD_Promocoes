@@ -2,9 +2,8 @@ import type { Promotion } from "@/lib/mock-data";
 
 const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:5000";
 
-// ── tipos ─────────────────────────────────────────────────────────────────────
 
-/** Payload enviado ao criar uma promoção */
+//Payload enviado ao criar uma promoção 
 export type CreatePromoPayload = {
   nome: string;
   email: string;
@@ -18,22 +17,7 @@ export type InterestPayload = {
   categoria: string; // nome da categoria, ex: "Livro"
 };
 
-/** Resposta genérica de erro do gateway */
-type GatewayError = { error: string };
-
-// ── helpers ───────────────────────────────────────────────────────────────────
-
 async function handleResponse<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    let msg = `Erro HTTP ${res.status}`;
-    try {
-      const body = (await res.json()) as GatewayError;
-      if (body.error) msg = body.error;
-    } catch {
-      // ignora falha no parse
-    }
-    throw new Error(msg);
-  }
   return res.json() as Promise<T>;
 }
 
@@ -52,7 +36,6 @@ function normalizePromotion(raw: Record<string, unknown>): Promotion {
   };
 }
 
-// ── funções públicas ──────────────────────────────────────────────────────────
 
 /**
  * GET /promocoes
@@ -115,7 +98,6 @@ export async function cancelarInteresse(payload: InterestPayload): Promise<void>
 
 export function abrirStreamPromocoes(
   onMessage: (promotions: Promotion[]) => void,
-  onError?: (e: Event) => void,
 ): EventSource {
   const es = new EventSource(`${BASE_URL}/stream`);
 
@@ -123,8 +105,6 @@ export function abrirStreamPromocoes(
     const raw = JSON.parse(event.data as string) as Record<string, unknown>[];
     onMessage(raw.map(normalizePromotion));
   };
-
-  if (onError) es.onerror = onError;
 
   return es;
 }

@@ -32,7 +32,7 @@ export type Promotion = {
   nome: string;
   email?: string;
   preco: number;
-  votos: number; // Padronizado para português
+  votos: number;
   hot?: boolean;
   categoria?: number; // ID da categoria (1-5)
 };

@@ -110,7 +110,7 @@ def callback(ch, method, properties, body):
 			promo = itens[id]
 			promo['votos'] = n_votos
 
-			if n_votos > 3:
+			if n_votos >= 3:
 				promo['hot'] = True
 			else:
 				promo['hot'] = False
@@ -197,10 +197,6 @@ def lista_promocoes_categ(categorias):
 # Adiciona interesse de um usuário em uma categoria
 @app.route('/interesse', methods=['POST'])
 def registrar_interesse():
-	"""
-	Registra o interesse de um usuário (email) em receber notificações de uma categoria.
-	Body: { "email": "user@exemplo.com", "categoria": "Livro" }
-	"""
 	data = request.get_json()
 	email = data.get('email')
 	categoria = data.get('categoria')
@@ -208,19 +204,12 @@ def registrar_interesse():
 	if not email or not categoria:
 		return jsonify({"error": "Email e categoria são obrigatórios"}), 400
 	
-	# TODO: Implementar persistência de interesses (pode usar dict, DB, arquivo, etc.)
-	# Por enquanto apenas retorna sucesso para não quebrar o front
 	print(f"[] Interesse registrado: {email} -> {categoria}")
-	
 	return jsonify({"message": "Interesse registrado com sucesso"}), 201
 
 # Cancela interesse de um usuário em uma categoria
 @app.route('/interesse', methods=['DELETE'])
 def cancelar_interesse():
-	"""
-	Remove o interesse de um usuário em uma categoria.
-	Body: { "email": "user@exemplo.com", "categoria": "Livro" }
-	"""
 	data = request.get_json()
 	email = data.get('email')
 	categoria = data.get('categoria')
@@ -228,9 +217,7 @@ def cancelar_interesse():
 	if not email or not categoria:
 		return jsonify({"error": "Email e categoria são obrigatórios"}), 400
 	
-	# TODO: Implementar remoção de persistência de interesses
 	print(f"[] Interesse cancelado: {email} -> {categoria}")
-	
 	return jsonify({"message": "Interesse cancelado com sucesso"}), 200
 
 #Atualiza os votos das promoções
